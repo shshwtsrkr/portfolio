@@ -35,7 +35,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/portfolio_db?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: portfolio_user
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
-      FILE_UPLOAD_BASE_URL: ${BACKEND_URL}
+      FILE_UPLOAD_BASE_URL: ${FILE_UPLOAD_BASE_URL}
     volumes:
       - uploads-data:/app/uploads
     depends_on:
@@ -76,7 +76,7 @@ services:
       - ./frontend/dist:/var/www/html
     depends_on:
       - nginx
-    command: certonly --webroot --webroot-path=/var/www/html --email ${SSL_EMAIL} --agree-tos --no-eff-email --force-renewal -d ${DOMAIN} -d www.${DOMAIN}
+    command: certonly --webroot --webroot-path=/var/www/html --email ${SSL_EMAIL} --agree-tos --no-eff-email -d ${DOMAIN} -d www.${DOMAIN}
 
 volumes:
   mysql-data:
