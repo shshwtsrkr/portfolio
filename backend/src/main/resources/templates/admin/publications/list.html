@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>[ PUBLICATIONS DATABASE ]</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #000000; color: #ffffff; }
+        .header { background: #000000; border-bottom: 1px solid #ffffff; padding: 20px; }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 16px; letter-spacing: 2px; }
+        .header h1::before { content: '# '; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .toolbar { display: flex; justify-content: space-between; margin-bottom: 25px; align-items: center; }
+        .toolbar h2 { font-size: 13px; }
+        .toolbar h2::before { content: '>> '; }
+        .btn { padding: 10px 24px; text-decoration: none; display: inline-block; font-family: 'Inter', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; font-weight: 700; }
+        .btn-primary { background: #ffffff; color: #000000; border-radius: 50px; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: #ffffff; color: #000000; border-radius: 50px; padding: 8px 16px; font-size: 10px; }
+        .btn-secondary:hover { opacity: 0.9; }
+        .btn-danger { background: #000000; color: #ff0000; border: 1px solid #ff0000; border-radius: 50px; padding: 8px 16px; font-size: 10px; }
+        .btn-danger:hover { background: #ff0000; color: #000000; }
+        .btn-back { background: #000000; border: 1px solid #ffffff; color: #ffffff; border-radius: 50px; }
+        .btn-back:hover { background: #ffffff; color: #000000; }
+        table { width: 100%; background: #000000; border: 1px solid #ffffff; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #333333; }
+        th { background: #000000; font-weight: 700; color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+        tr:hover { background: #111111; }
+        .actions { display: flex; gap: 10px; }
+        td { color: #ffffff; font-size: 12px; }
+        .drag-handle { cursor: grab; font-size: 18px; user-select: none; color: #666666; }
+        .drag-handle:hover { color: #ffffff; }
+        .drag-handle:active { cursor: grabbing; }
+        .sortable-ghost { opacity: 0.4; background: #222222; }
+        .sortable-chosen { background: #1a1a1a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>PUBLICATIONS DATABASE</h1>
+            <a href="/admin/dashboard" class="btn btn-back">Return</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="toolbar">
+            <h2>ALL ENTRIES</h2>
+            <a href="/admin/publications/new" class="btn btn-primary">+ New Entry</a>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>Title</th>
+                    <th>Venue</th>
+                    <th>Year</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="publicationsList">
+                <tr th:each="publication : ${publications}" th:data-id="${publication.id}">
+                    <td><span class="drag-handle">☰</span></td>
+                    <td th:text="${publication.title}"></td>
+                    <td th:text="${publication.venue}"></td>
+                    <td th:text="${publication.year}"></td>
+                    <td class="actions">
+                        <a th:href="@{/admin/publications/edit/{id}(id=${publication.id})}" class="btn btn-secondary">Edit</a>
+                        <a th:href="@{/admin/publications/delete/{id}(id=${publication.id})}" class="btn btn-danger"
+                           onclick="return confirm('[!] DELETE ENTRY?')">Delete</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        <script>
+            const tbody = document.getElementById('publicationsList');
+            const sortable = new Sortable(tbody, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: function(evt) {
+                    const items = Array.from(tbody.querySelectorAll('tr')).map((row, index) => ({
+                        id: row.dataset.id,
+                        displayOrder: index
+                    }));
+
+                    fetch('/admin/publications/reorder', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(items)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            console.log('✓ Order updated');
+                        } else {
+                            alert('✗ Failed to update order');
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('✗ Error updating order');
+                        location.reload();
+                    });
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

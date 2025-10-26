@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'[ TABLE: ' + ${tableName} + ' ]'">[ TABLE VIEW ]</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #000000;
+            border-bottom: 1px solid #ffffff;
+            padding: 20px;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .header h1::before {
+            content: '# ';
+        }
+
+        .back-btn {
+            background: #ffffff;
+            color: #000000;
+            padding: 10px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover {
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        .section-title::before {
+            content: '>> ';
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #000000;
+            border: 1px solid #333333;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        .data-table th {
+            background: #111111;
+            border: 1px solid #333333;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
+
+        .data-table td {
+            border: 1px solid #333333;
+            padding: 10px 12px;
+            color: #cccccc;
+        }
+
+        .data-table tr:hover {
+            background: #111111;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: #000000;
+            border: 1px solid #333333;
+        }
+
+        .type-badge {
+            background: #111111;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: #00ff00;
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>TABLE: <span th:text="${tableName}">profile</span></h1>
+            <a href="/admin/database" class="back-btn">← Back to Database</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Schema Section -->
+        <div class="section">
+            <div class="section-title">Table Schema</div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Column Name</th>
+                            <th>Data Type</th>
+                            <th>Size</th>
+                            <th>Nullable</th>
+                            <th>Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="column : ${schema}">
+                            <td th:text="${column.name}">id</td>
+                            <td><span class="type-badge" th:text="${column.type}">BIGINT</span></td>
+                            <td th:text="${column.size}">19</td>
+                            <td th:text="${column.nullable}">NO</td>
+                            <td th:text="${column.default} ?: 'NULL'">NULL</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Data Preview Section -->
+        <div class="section">
+            <div class="section-title">Data Preview (First 10 Rows) <span class="cursor">█</span></div>
+            <div class="table-container" th:if="${preview != null and !preview.isEmpty()}">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th th:each="key : ${preview[0].keySet()}" th:text="${key}">Column</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${preview}">
+                            <td th:each="key : ${row.keySet()}" th:text="${row.get(key)}">Value</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${preview == null or preview.isEmpty()}" style="color: #666666; font-size: 12px;">
+                // No data available
+            </div>
+        </div>
+    </div>
+</body>
+</html>

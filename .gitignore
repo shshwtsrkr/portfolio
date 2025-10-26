@@ -1,0 +1,54 @@
+# Environment variables
+.env
+backend/.env
+frontend/.env
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# Maven
+backend/target/
+backend/.mvn/
+
+# Uploads (will be in Docker volume)
+backend/uploads/
+uploads/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker volumes data
+mysql-data/
+uploads-data/
+
+# SSL certificates (will be generated)
+certbot-etc/
+certbot-var/
+# Environment configs
+frontend/.env
+frontend/.env.local
+frontend/.env.*
+!frontend/.env.example
+!frontend/.env.development
+!frontend/.env.production
+backend/.env
+backend/.env.local
+backend/.env.*
+!backend/.env.example
+!backend/.env.dev
+!backend/.env.production
+.env.defaults
