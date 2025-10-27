@@ -6,7 +6,16 @@ const SmoothScroll = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Initialize Lenis
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches || window.innerWidth < 768;
+
+    if (isTouchDevice) {
+      return undefined;
+    }
+
     const lenis = new Lenis({
       duration: 0.8,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // easeOutExpo
@@ -19,19 +28,16 @@ const SmoothScroll = ({ children }) => {
       infinite: false,
     });
 
-    // Add lenis class to html element
     document.documentElement.classList.add('lenis', 'lenis-smooth');
 
-    // Animation frame loop
     let rafId;
-    function raf(time) {
+    const raf = (time) => {
       lenis.raf(time);
       rafId = requestAnimationFrame(raf);
-    }
+    };
 
     rafId = requestAnimationFrame(raf);
 
-    // Cleanup
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
       lenis.destroy();
