@@ -310,15 +310,12 @@ public class AdminProfileController {
 
             boolean asciiSuccess = false;
             try {
-                String relativePath = fileUrl.startsWith("/uploads/")
-                        ? fileUrl.substring("/uploads/".length())
-                        : fileUrl.replaceFirst("^/", "");
-                Path absolutePath = Path.of(fileUploadService.getUploadDirPath(), relativePath);
+            Path absolutePath = fileUploadService.getAbsolutePathFromUrl(fileUrl);
 
-                // Generate ASCII art as an actual image file
-                String asciiImageUrl = asciiArtService.generateAsciiImage(absolutePath, "profile");
-                profile.setAsciiImageUrl(asciiImageUrl);
-                asciiSuccess = true;
+            // Generate ASCII art as an actual image file
+            String asciiImageUrl = asciiArtService.generateAsciiImage(absolutePath, "profile");
+            profile.setAsciiImageUrl(asciiImageUrl);
+            asciiSuccess = true;
             } catch (Exception e) {
                 profile.setAsciiImageUrl(null);
                 redirectAttributes.addFlashAttribute("errorMessage", "Image uploaded, but ASCII conversion failed: " + e.getMessage());
