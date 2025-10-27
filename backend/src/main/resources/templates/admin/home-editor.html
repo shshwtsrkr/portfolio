@@ -335,6 +335,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/update-basic}">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div class="form-group">
                         <label class="form-label">Name</label>
@@ -368,6 +369,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/upload-profile-image}" enctype="multipart/form-data">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div th:if="${profile.profileImageUrl}" style="text-align: center; margin-bottom: 20px;">
                         <img th:src="${profile.profileImageUrl}" class="image-preview" alt="Current profile image">
@@ -393,6 +395,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/update-animation-speed}">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div class="form-group">
                         <label class="form-label">Animation Duration (seconds)</label>
@@ -415,6 +418,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/upload-resume}" enctype="multipart/form-data">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div th:if="${profile.resumeFileUrl}" style="margin-bottom: 20px; padding: 15px; background: #0a0a0a; border: 1px solid #333333;">
                         <div style="color: #00ff00; margin-bottom: 10px;">✓ Resume currently uploaded</div>
@@ -442,6 +446,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/update-typing}">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div class="form-group">
                         <label class="form-label">Animation Texts (JSON Array)</label>
@@ -465,6 +470,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/update-oneliner}">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div class="form-group">
                         <label class="form-label">One-Liner Configuration (JSON)</label>
@@ -488,6 +494,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/update-socials}">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div class="form-group">
                         <label class="form-label">Socials Configuration (JSON Array)</label>
@@ -514,6 +521,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/update-tech-stack}">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div class="form-group">
                         <label class="form-label">Tech Stack Configuration (JSON Array)</label>
@@ -540,6 +548,7 @@
             <div class="section-body">
                 <form method="post" th:action="@{/admin/profile/update-expertise}">
                     <input type="hidden" name="id" th:value="${profile.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
                     <div class="form-group">
                         <label class="form-label">Expertise Cards Configuration (JSON Array)</label>
