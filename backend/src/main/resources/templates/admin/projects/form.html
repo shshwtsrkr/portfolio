@@ -13,6 +13,9 @@
         .header h1::before { content: '# '; }
         .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
         .form-card { background: #000000; border: 1px solid #ffffff; padding: 40px; }
+        .alert { padding: 15px 20px; margin-bottom: 20px; border: 1px solid; font-size: 12px; }
+        .alert-success { background: #00ff0010; border-color: #00ff00; color: #00ff00; }
+        .alert-error { background: #ff000010; border-color: #ff0000; color: #ff0000; }
         .form-group { margin-bottom: 25px; }
         label { display: block; margin-bottom: 10px; color: #ffffff; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
         label::before { content: '> '; }
@@ -42,6 +45,13 @@
     </div>
     
     <div class="container">
+        <div th:if="${successMessage}" class="alert alert-success">
+            <span>✓ </span><span th:text="${successMessage}">Success</span>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-error">
+            <span>✗ </span><span th:text="${errorMessage}">Error</span>
+        </div>
+
         <div class="form-card">
             <form th:action="@{/admin/projects/save}" th:object="${project}" method="post">
                 <input type="hidden" th:field="*{id}">

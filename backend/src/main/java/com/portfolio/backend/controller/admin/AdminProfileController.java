@@ -30,6 +30,17 @@ public class AdminProfileController {
     @Autowired
     private AsciiArtService asciiArtService;
 
+    private Profile ensureProfile(Long id) {
+        if (id != null) {
+            return profileService.getProfileById(id)
+                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+        }
+
+        return profileService.getAllProfiles().stream()
+                .findFirst()
+                .orElseGet(() -> profileService.createProfile(new Profile()));
+    }
+
     private static final String DEFAULT_TYPING_JSON = "[\"Deep Learning Researcher\", \"Computer Vision Expert\", \"DevOps Engineer\"]";
     private static final String DEFAULT_ONELINER_JSON = """
             {
@@ -140,22 +151,19 @@ public class AdminProfileController {
 
     @PostMapping("/update-basic")
     public String updateBasicInfo(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam String name,
             @RequestParam String title,
             @RequestParam String about,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             profile.setName(name);
             profile.setTitle(title);
             profile.setAbout(about);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Basic info updated!");
         } catch (Exception e) {
@@ -167,18 +175,15 @@ public class AdminProfileController {
 
     @PostMapping("/update-typing")
     public String updateTypingTexts(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam String typingAnimationTexts,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             profile.setTypingAnimationTexts(typingAnimationTexts);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Typing animation updated!");
         } catch (Exception e) {
@@ -190,18 +195,15 @@ public class AdminProfileController {
 
     @PostMapping("/update-oneliner")
     public String updateOneliner(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam String onelinerConfig,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             profile.setOnelinerConfig(onelinerConfig);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "One-liner updated!");
         } catch (Exception e) {
@@ -213,18 +215,15 @@ public class AdminProfileController {
 
     @PostMapping("/update-socials")
     public String updateSocials(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam String socials,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             profile.setSocials(socials);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Socials updated!");
         } catch (Exception e) {
@@ -236,18 +235,15 @@ public class AdminProfileController {
 
     @PostMapping("/update-tech-stack")
     public String updateTechStack(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam String techStack,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             profile.setTechStack(techStack);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Tech stack updated!");
         } catch (Exception e) {
@@ -259,18 +255,15 @@ public class AdminProfileController {
 
     @PostMapping("/update-expertise")
     public String updateExpertiseCards(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam String expertiseCards,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             profile.setExpertiseCards(expertiseCards);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Expertise cards updated!");
         } catch (Exception e) {
@@ -282,15 +275,12 @@ public class AdminProfileController {
 
     @PostMapping("/upload-profile-image")
     public String uploadProfileImage(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam("file") MultipartFile file,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             if (profile.getProfileImageUrl() != null && !profile.getProfileImageUrl().isEmpty()) {
                 fileUploadService.deleteFile(profile.getProfileImageUrl());
@@ -319,7 +309,7 @@ public class AdminProfileController {
                 profile.setAsciiImageUrl(null);
                 redirectAttributes.addFlashAttribute("errorMessage", "Image uploaded, but ASCII conversion failed: " + e.getMessage());
             }
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             if (asciiSuccess) {
                 redirectAttributes.addFlashAttribute("successMessage", "Profile image & ASCII portrait updated!");
@@ -335,15 +325,12 @@ public class AdminProfileController {
 
     @PostMapping("/update-animation-speed")
     public String updateAnimationSpeed(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam Double animationSpeed,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             if (animationSpeed < 0.1 || animationSpeed > 10.0) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Animation speed must be between 0.1 and 10 seconds");
@@ -351,7 +338,7 @@ public class AdminProfileController {
             }
 
             profile.setNameAnimationSpeed(animationSpeed);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Animation speed updated to " + animationSpeed + "s!");
         } catch (Exception e) {
@@ -363,15 +350,12 @@ public class AdminProfileController {
 
     @PostMapping("/upload-resume")
     public String uploadResume(
-            @RequestParam Long id,
+            @RequestParam(required = false) Long id,
             @RequestParam("file") MultipartFile file,
             RedirectAttributes redirectAttributes) {
 
         try {
-            Profile profile = profileService.getAllProfiles().stream()
-                    .filter(p -> p.getId().equals(id))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+            Profile profile = ensureProfile(id);
 
             // Validate file is PDF
             String contentType = file.getContentType();
@@ -388,7 +372,7 @@ public class AdminProfileController {
             // Upload new resume PDF
             String fileUrl = fileUploadService.uploadFile(file, "resume");
             profile.setResumeFileUrl(fileUrl);
-            profileService.updateProfile(id, profile);
+            profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Resume uploaded successfully!");
         } catch (Exception e) {
