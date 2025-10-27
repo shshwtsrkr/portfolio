@@ -33,12 +33,26 @@ public class AdminProfileController {
     private Profile ensureProfile(Long id) {
         if (id != null) {
             return profileService.getProfileById(id)
-                    .orElseThrow(() -> new RuntimeException("Profile not found"));
+                    .orElseGet(this::createDefaultProfile);
         }
 
         return profileService.getAllProfiles().stream()
                 .findFirst()
-                .orElseGet(() -> profileService.createProfile(new Profile()));
+                .orElseGet(this::createDefaultProfile);
+    }
+
+    private Profile createDefaultProfile() {
+        Profile profile = new Profile();
+        profile.setName("New Profile");
+        profile.setTitle("");
+        profile.setAbout("");
+        profile.setTypingAnimationTexts(DEFAULT_TYPING_JSON);
+        profile.setOnelinerConfig(DEFAULT_ONELINER_JSON);
+        profile.setSocials(DEFAULT_SOCIALS_JSON);
+        profile.setTechStack(DEFAULT_TECH_STACK_JSON);
+        profile.setExpertiseCards(DEFAULT_EXPERTISE_JSON);
+        profile.setNameAnimationSpeed(2.5);
+        return profileService.createProfile(profile);
     }
 
     private static final String DEFAULT_TYPING_JSON = "[\"Deep Learning Researcher\", \"Computer Vision Expert\", \"DevOps Engineer\"]";
