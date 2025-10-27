@@ -85,7 +85,7 @@ const Navigation = () => {
     >
       <div className="flex justify-center items-center">
         <div
-          className="relative inline-flex rounded-full p-1.5 sm:p-1.5 lg:p-2 shadow-xl border border-white/20 dark:border-white/10 overflow-visible w-full max-w-2xl pointer-events-auto"
+          className="relative inline-flex rounded-full p-1.5 sm:p-1.5 lg:p-2 shadow-xl border border-white/20 dark:border-white/10 overflow-hidden w-full max-w-2xl pointer-events-auto"
           style={{
             background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.05)',
             backdropFilter: 'blur(20px) saturate(180%)',
@@ -125,7 +125,7 @@ const Navigation = () => {
                   ref={el => {
                     itemRefs.current[index] = el ?? null;
                   }}
-                  className={`relative z-10 flex-1 rounded-full text-base sm:text-lg lg:text-xl font-semibold transition-colors duration-300 whitespace-nowrap flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3 lg:px-9 lg:py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-400 cursor-pointer ${
+                  className={`relative z-10 flex-1 rounded-full text-sm sm:text-base lg:text-xl font-semibold transition-colors duration-300 whitespace-nowrap flex items-center justify-center px-3 py-2.5 sm:px-5 sm:py-3 lg:px-9 lg:py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-400 cursor-pointer ${
                     isActive
                       ? 'text-black dark:text-black'
                       : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'
