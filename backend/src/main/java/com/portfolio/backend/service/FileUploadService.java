@@ -167,9 +167,7 @@ public class FileUploadService {
         }
 
         try {
-            // Extract path from URL (remove /uploads/ prefix)
-            String relativePath = fileUrl.replace("/uploads/", "");
-            Path filePath = Paths.get(uploadDir, relativePath);
+            Path filePath = getAbsolutePathFromUrl(fileUrl);
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
             // Log error but don't throw exception
@@ -214,5 +212,25 @@ public class FileUploadService {
      */
     public String getUploadDirPath() {
         return new File(uploadDir).getAbsolutePath();
+    }
+
+    public Path getAbsolutePathFromUrl(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
+            throw new IllegalArgumentException("File URL cannot be empty");
+        }
+
+        String normalized = fileUrl.trim();
+
+        if (baseUrl != null && !baseUrl.isBlank() && normalized.startsWith(baseUrl)) {
+            normalized = normalized.substring(baseUrl.length());
+        }
+
+        normalized = normalized.replaceFirst("^/+", "");
+
+        if (normalized.startsWith("uploads/")) {
+            normalized = normalized.substring("uploads/".length());
+        }
+
+        return Paths.get(uploadDir).resolve(normalized);
     }
 }
