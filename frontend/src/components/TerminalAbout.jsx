@@ -164,7 +164,7 @@ const TerminalAbout = ({ profile }) => {
                     duration: 0.6,
                     ease: 'easeOut',
                   }}
-                  className="relative whitespace-pre-wrap break-words bg-gradient-to-r from-white/0 via-white/8 to-transparent bg-[length:200%_100%] rounded-md px-2 py-1"
+                  className="relative whitespace-pre-wrap break-words"
                 >
                   {segment}
                 </motion.p>
