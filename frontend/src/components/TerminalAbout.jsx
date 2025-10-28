@@ -2,20 +2,32 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 const TerminalAbout = ({ profile }) => {
-  const [typedText, setTypedText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const fullText = profile?.about || '';
+  const aboutSegments = useMemo(() => {
+    if (!profile?.about) return [];
+    return profile.about
+      .split(/\n+/)
+      .map((segment) => segment.trim())
+      .filter(Boolean);
+  }, [profile?.about]);
+
+  const [visibleSegments, setVisibleSegments] = useState([]);
 
   useEffect(() => {
-    if (currentIndex < fullText.length) {
-      const timeout = setTimeout(() => {
-        setTypedText(fullText.slice(0, currentIndex + 1));
-        setCurrentIndex(currentIndex + 1);
-      }, 30); // Typing speed
-
-      return () => clearTimeout(timeout);
+    setVisibleSegments([]);
+    if (!aboutSegments.length) {
+      return;
     }
-  }, [currentIndex, fullText]);
+
+    const timers = aboutSegments.map((segment, index) =>
+      setTimeout(() => {
+        setVisibleSegments((prev) => [...prev, segment]);
+      }, index * 450),
+    );
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [aboutSegments]);
 
   const portraitUrl = useMemo(() => {
     if (!profile?.profileImageUrl) {
@@ -134,14 +146,29 @@ const TerminalAbout = ({ profile }) => {
               <span className="text-gray-300">cat about.txt</span>
             </div>
 
-            {/* Typed Content */}
-            <div className="text-gray-300 text-xs sm:text-sm leading-relaxed overflow-y-auto overflow-x-hidden flex-1 pr-2">
-              <div className="whitespace-pre-wrap break-all word-break-break-word">
-                {typedText}
-                {currentIndex < fullText.length && (
-                  <span className="inline-block w-1.5 h-3 sm:w-2 sm:h-4 bg-green-400 animate-pulse ml-1"></span>
-                )}
-              </div>
+            {/* Gemini-style streaming content */}
+            <div className="text-gray-300 text-xs sm:text-sm leading-relaxed overflow-y-auto overflow-x-hidden flex-1 pr-2 space-y-3">
+              {visibleSegments.length === 0 && (
+                <div className="h-3 w-24 rounded-full bg-white/10 animate-pulse" />
+              )}
+              {visibleSegments.map((segment, index) => (
+                <motion.p
+                  key={`${segment}-${index}`}
+                  initial={{ opacity: 0, y: 6, backgroundPosition: '200% 0' }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    backgroundPosition: '0% 0',
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    ease: 'easeOut',
+                  }}
+                  className="relative whitespace-pre-wrap break-words bg-gradient-to-r from-white/0 via-white/8 to-transparent bg-[length:200%_100%] rounded-md px-2 py-1"
+                >
+                  {segment}
+                </motion.p>
+              ))}
             </div>
           </div>
         </div>
