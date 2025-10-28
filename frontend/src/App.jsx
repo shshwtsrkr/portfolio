@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import { ThemeProvider } from './context/ThemeContext';
@@ -58,7 +58,6 @@ function AnimatedRoutes() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/publications" element={<Publications />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AnimatePresence>
     </div>
