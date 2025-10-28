@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 
 const TerminalAbout = ({ profile }) => {
   const aboutSegments = useMemo(() => {
@@ -152,7 +153,7 @@ const TerminalAbout = ({ profile }) => {
                 <div className="h-3 w-24 rounded-full bg-white/10 animate-pulse" />
               )}
               {visibleSegments.map((segment, index) => (
-                <motion.p
+                <motion.div
                   key={`${segment}-${index}`}
                   initial={{ opacity: 0, y: 6, backgroundPosition: '200% 0' }}
                   animate={{
@@ -164,10 +165,28 @@ const TerminalAbout = ({ profile }) => {
                     duration: 0.6,
                     ease: 'easeOut',
                   }}
-                  className="relative whitespace-pre-wrap break-words"
+                  className="relative whitespace-pre-wrap break-words markdown-content"
                 >
-                  {segment}
-                </motion.p>
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p className="mb-0">{children}</p>,
+                      a: ({ href, children }) => (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/50 hover:decoration-cyan-300 transition-colors"
+                        >
+                          {children}
+                        </a>
+                      ),
+                      strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
+                      em: ({ children }) => <em className="italic text-gray-200">{children}</em>,
+                    }}
+                  >
+                    {segment}
+                  </ReactMarkdown>
+                </motion.div>
               ))}
             </div>
           </div>
