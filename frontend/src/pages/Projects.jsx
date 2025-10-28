@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { FaGithub, FaExternalLinkAlt, FaCalendarAlt } from 'react-icons/fa';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { FaGithub, FaExternalLinkAlt, FaCalendarAlt, FaArrowRight } from 'react-icons/fa';
 import axios from 'axios';
 import Button from '../components/Button';
 import ActivityRings from '../components/ActivityRings';
 import { LoadingSpinner, SkeletonLoader } from '../components/LoadingStates';
 import EmptyState from '../components/EmptyState';
+import ProjectDetailsModal from '../components/ProjectDetailsModal';
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
+  const [activeProject, setActiveProject] = useState(null);
   const { scrollY } = useScroll();
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
 
@@ -159,18 +161,24 @@ const Projects = () => {
             {filteredProjects.length === 0 ? (
               <EmptyState sectionName={statusFilter ? `projects with status: ${statusFilter}` : 'projects'} />
             ) : (
-              filteredProjects.map((project, index) => (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.8,
-                    delay: index * 0.1,
-                    ease: [0.22, 1, 0.36, 1]
-                  }}
-                >
-                  <div className="card-glass group flex h-full flex-col overflow-hidden">
+              filteredProjects.map((project, index) => {
+                const openDetails = () => setActiveProject(project);
+
+                return (
+                  <motion.button
+                    key={project.id}
+                    type="button"
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.8,
+                      delay: index * 0.1,
+                      ease: [0.22, 1, 0.36, 1]
+                    }}
+                    className="group h-full text-left focus-visible:outline-none"
+                    onClick={openDetails}
+                  >
+                    <div className="card-glass flex h-full flex-col overflow-hidden">
                     {project.previewImageUrl && (
                       <div className="relative overflow-hidden rounded-xl -mt-6 -mx-6 mb-6 transition-opacity duration-300 group-hover:opacity-80">
                         <img
@@ -190,26 +198,39 @@ const Projects = () => {
 
                     <div className="flex flex-1 flex-col space-y-4">
                       <div className="transition-opacity duration-300 group-hover:opacity-70 space-y-4">
-                        <h2 className="text-xl md:text-2xl font-semibold text-black dark:text-white">
+                        <h2 className="text-xl md:text-2xl font-semibold text-white">
                           {project.title}
                         </h2>
 
-                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
+                        <p className="text-gray-400 leading-relaxed line-clamp-3">
                           {project.description}
                         </p>
 
                         {project.technologies && (
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                          <p className="text-xs font-medium text-gray-200">
                             {project.technologies.split(',').map((tech) => tech.trim()).join(' • ')}
                           </p>
                         )}
 
                         {project.completedDate && (
-                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 border-t border-black/10 pt-4 dark:border-white/10">
+                          <div className="flex items-center gap-2 text-sm text-gray-400">
                             <FaCalendarAlt className="w-3 h-3" />
                             <span>{project.completedDate}</span>
                           </div>
                         )}
+
+                        <div className="flex items-center justify-end border-t border-white/10 pt-4 text-sm">
+                          <span
+                            className="flex items-center gap-2 text-gray-400 font-semibold"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              openDetails();
+                            }}
+                          >
+                            View Details
+                            <FaArrowRight className="w-3 h-3" />
+                          </span>
+                        </div>
                       </div>
 
                       {(() => {
@@ -227,6 +248,7 @@ const Projects = () => {
                                 variant="ghost"
                                 icon={FaGithub}
                                 className="px-3 py-2 text-sm border border-white/15 bg-white/5 text-white hover:bg-white/10"
+                                onClick={(event) => event.stopPropagation()}
                               >
                                 Code
                               </Button>
@@ -237,6 +259,7 @@ const Projects = () => {
                                 variant="ghost"
                                 icon={FaExternalLinkAlt}
                                 className="px-3 py-2 text-sm border border-white/15 bg-white/5 text-white hover:bg-white/10"
+                                onClick={(event) => event.stopPropagation()}
                               >
                                 Live Demo
                               </Button>
@@ -246,10 +269,19 @@ const Projects = () => {
                       })()}
                     </div>
                   </div>
-                </motion.div>
-              ))
+                </motion.button>
+              );
+            })
             )}
           </motion.div>
+          <AnimatePresence>
+            {activeProject && (
+              <ProjectDetailsModal
+                project={activeProject}
+                onClose={() => setActiveProject(null)}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
