@@ -17,18 +17,17 @@ const TerminalAbout = ({ profile }) => {
     }
   }, [currentIndex, fullText]);
 
-  const asciiImageUrl = useMemo(() => {
-    if (!profile?.asciiImageUrl) {
+  const portraitUrl = useMemo(() => {
+    if (!profile?.profileImageUrl) {
       return null;
     }
-    // Resolve the image URL
-    const url = profile.asciiImageUrl;
+    const url = profile.profileImageUrl;
     if (/^https?:/i.test(url)) {
       return url;
     }
     const sanitized = url.startsWith('/') ? url : `/${url}`;
     return `${import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8080'}${sanitized}`;
-  }, [profile?.asciiImageUrl]);
+  }, [profile?.profileImageUrl]);
 
   const systemInfo = [
     { label: 'Name', value: profile?.name || 'User' },
@@ -65,15 +64,11 @@ const TerminalAbout = ({ profile }) => {
             <div className="flex flex-col gap-4 overflow-hidden w-full">
               {/* ASCII Art */}
               <div className="flex justify-center">
-                {asciiImageUrl ? (
+                {portraitUrl ? (
                   <img
-                    src={asciiImageUrl}
-                    alt="ASCII Portrait"
-                    className="w-auto h-auto max-w-[240px] sm:max-w-[280px] object-contain"
-                    style={{
-                      imageRendering: 'pixelated',
-                      filter: 'contrast(1.05)'
-                    }}
+                    src={portraitUrl}
+                    alt={profile?.name ? `${profile.name} portrait` : 'Profile portrait'}
+                    className="w-auto h-auto max-w-[240px] sm:max-w-[280px] rounded-xl object-cover border border-gray-800"
                   />
                 ) : (
                   <div className="text-gray-500 text-xs font-mono">

@@ -3,7 +3,6 @@ package com.portfolio.backend.controller.admin;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.backend.model.Profile;
-import com.portfolio.backend.service.AsciiArtService;
 import com.portfolio.backend.service.FileUploadService;
 import com.portfolio.backend.service.ProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,9 +29,6 @@ public class AdminProfileController {
     private FileUploadService fileUploadService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Autowired
-    private AsciiArtService asciiArtService;
 
     private Profile ensureProfile(Long id) {
         if (id != null) {
@@ -417,31 +412,10 @@ public class AdminProfileController {
 
             String fileUrl = fileUploadService.uploadImage(file, "profile");
             profile.setProfileImageUrl(fileUrl);
-
-            // Delete old ASCII image if exists
-            if (profile.getAsciiImageUrl() != null && !profile.getAsciiImageUrl().isEmpty()) {
-                fileUploadService.deleteFile(profile.getAsciiImageUrl());
-            }
-
-            boolean asciiSuccess = false;
-            try {
-            Path absolutePath = fileUploadService.getAbsolutePathFromUrl(fileUrl);
-
-            // Generate ASCII art as an actual image file
-            String asciiImageUrl = asciiArtService.generateAsciiImage(absolutePath, "profile");
-            profile.setAsciiImageUrl(asciiImageUrl);
-            asciiSuccess = true;
-            } catch (Exception e) {
-                profile.setAsciiImageUrl(null);
-                redirectAttributes.addFlashAttribute("errorMessage", "Image uploaded, but ASCII conversion failed: " + e.getMessage());
-            }
+            profile.setAsciiImageUrl(null);
             profileService.updateProfile(profile.getId(), profile);
 
-            if (asciiSuccess) {
-                redirectAttributes.addFlashAttribute("successMessage", "Profile image & ASCII portrait updated!");
-            } else {
-                redirectAttributes.addFlashAttribute("successMessage", "Profile image uploaded!");
-            }
+            redirectAttributes.addFlashAttribute("successMessage", "Profile image uploaded!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed: " + e.getMessage());
         }
