@@ -574,8 +574,8 @@ const Home = () => {
               transition={{ duration: 1.4, repeat: Infinity }}
               className="flex-shrink-0"
             >
-              <div className="w-5 h-8 border-2 border-gray-400/70 dark:border-gray-600/70 rounded-full flex justify-center p-1.5">
-                <div className="w-0.5 h-2 bg-gray-400/80 dark:bg-gray-500 rounded-full" />
+              <div className="w-5 h-8 border-2 border-gray-600/70 rounded-full flex justify-center p-1.5">
+                <div className="w-0.5 h-2 bg-gray-500 rounded-full" />
               </div>
             </motion.div>
           </motion.div>
@@ -584,7 +584,7 @@ const Home = () => {
 
       {/* Tech Stack Section - Outside of scroll fade */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-white to-blue-50/30 dark:from-[#000000] dark:via-[#000000] dark:to-[#000000] transition-colors duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#000000] to-[#000000]" />
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex items-center justify-center gap-4 mb-6">
             <p className="text-sm uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">

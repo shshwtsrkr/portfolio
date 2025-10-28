@@ -85,9 +85,9 @@ const Navigation = () => {
     >
       <div className="flex justify-center items-center">
         <div
-          className="relative inline-flex rounded-full p-1.5 sm:p-1.5 lg:p-2 shadow-xl border border-white/20 dark:border-white/10 overflow-hidden w-full max-w-2xl pointer-events-auto"
+          className="relative inline-flex rounded-full p-1.5 sm:p-1.5 lg:p-2 shadow-xl border border-white/10 overflow-hidden w-full max-w-2xl pointer-events-auto"
           style={{
-            background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.05)',
+            background: 'rgba(255, 255, 255, 0.03)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)'
           }}
@@ -96,12 +96,8 @@ const Navigation = () => {
             <motion.div
               className="absolute inset-0 rounded-full"
               style={{
-                background: isDark
-                  ? 'radial-gradient(ellipse at 30% 30%, #ffffff 0%, #f8f8f8 40%, #e8e8e8 100%)'
-                  : 'radial-gradient(ellipse at 30% 30%, #ffffff 0%, #fafafa 40%, #f0f0f0 100%)',
-                boxShadow: isDark
-                  ? '6px 6px 16px rgba(0, 0, 0, 0.5), -3px -3px 10px rgba(255, 255, 255, 0.1), inset -3px -3px 6px rgba(0, 0, 0, 0.15), inset 2px 2px 6px rgba(255, 255, 255, 0.7)'
-                  : '6px 6px 16px rgba(0, 0, 0, 0.2), -3px -3px 10px rgba(255, 255, 255, 0.9), inset -3px -3px 6px rgba(0, 0, 0, 0.08), inset 2px 2px 6px rgba(255, 255, 255, 1)',
+                background: 'radial-gradient(ellipse at 30% 30%, #ffffff 0%, #f8f8f8 40%, #e8e8e8 100%)',
+                boxShadow: '6px 6px 16px rgba(0, 0, 0, 0.5), -3px -3px 10px rgba(255, 255, 255, 0.1), inset -3px -3px 6px rgba(0, 0, 0, 0.15), inset 2px 2px 6px rgba(255, 255, 255, 0.7)',
                 pointerEvents: 'none',
               }}
               initial={false}
@@ -127,8 +123,8 @@ const Navigation = () => {
                   }}
                   className={`relative z-10 flex-1 rounded-full text-sm sm:text-base lg:text-xl font-semibold transition-colors duration-300 whitespace-nowrap flex items-center justify-center px-3 py-2.5 sm:px-5 sm:py-3 lg:px-9 lg:py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-400 cursor-pointer ${
                     isActive
-                      ? 'text-black dark:text-black'
-                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'
+                      ? 'text-black'
+                      : 'text-white hover:text-gray-300'
                   }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

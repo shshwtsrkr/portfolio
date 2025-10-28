@@ -73,7 +73,7 @@ const Publications = () => {
         animate={{ opacity: 1 }}
         className="min-h-screen relative overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-[#000000] dark:via-[#000000] dark:to-[#000000] transition-colors duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#000000] to-[#000000]" />
 
         <div className="relative z-10 py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-5xl mx-auto">
@@ -107,7 +107,7 @@ const Publications = () => {
       className="min-h-screen relative overflow-hidden"
     >
       {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/20 via-white to-blue-50/20 dark:from-[#000000] dark:via-[#000000] dark:to-[#000000] transition-colors duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#000000] to-[#000000]" />
 
       <div className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -234,12 +234,12 @@ const Publications = () => {
 
                           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-300">
                             {publication.status && (
-                              <span className="rounded-full border border-black/10 bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black dark:border-white/15 dark:bg-white/5 dark:text-white">
+                              <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                                 {publication.status}
                               </span>
                             )}
                             {citations !== null && citations > 0 && (
-                              <span className="flex items-center gap-2 rounded-full border border-black/10 bg-black/5 px-3 py-1 text-xs font-semibold text-black dark:border-white/15 dark:bg-white/5 dark:text-white">
+                              <span className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white">
                                 <FaQuoteLeft className="w-3 h-3 opacity-60" />
                                 {citations} citation(s)
                               </span>
@@ -274,7 +274,7 @@ const Publications = () => {
                                   href={publication.codeUrl}
                                   variant="ghost"
                                   icon={FaGithub}
-                                  className="px-4 py-2.5 text-sm border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10"
+                                  className="px-4 py-2.5 text-sm border border-white/15 bg-white/5 text-white hover:bg-white/10"
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   Code
@@ -285,7 +285,7 @@ const Publications = () => {
                                   href={publication.pdfUrl}
                                   variant="ghost"
                                   icon={FaFilePdf}
-                                  className="px-4 py-2.5 text-sm border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/5 text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10"
+                                  className="px-4 py-2.5 text-sm border border-white/15 bg-white/5 text-white hover:bg-white/10"
                                   onClick={(event) => event.stopPropagation()}
                                 >
                                   Paper

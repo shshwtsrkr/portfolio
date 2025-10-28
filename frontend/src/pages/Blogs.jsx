@@ -83,7 +83,7 @@ const Blogs = () => {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="card-glass text-center max-w-md w-full">
-          <p className="text-xl text-black dark:text-white">{error}</p>
+          <p className="text-xl text-white">{error}</p>
         </div>
       </div>
     );
@@ -98,7 +98,7 @@ const Blogs = () => {
       className="min-h-screen relative overflow-hidden"
     >
       {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/20 via-white to-blue-50/20 dark:from-[#000000] dark:via-[#000000] dark:to-[#000000] transition-colors duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#000000] via-[#000000] to-[#000000]" />
 
       <div className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -156,9 +156,9 @@ const Blogs = () => {
 
                       {/* Reading Time Badge */}
                       <div className="absolute bottom-4 right-4">
-                        <div className="bg-white/90 dark:bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg border border-white/20">
-                          <FaClock className="w-3 h-3 text-gray-700 dark:text-gray-300" />
-                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        <div className="bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg border border-white/20">
+                          <FaClock className="w-3 h-3 text-gray-300" />
+                          <span className="text-xs font-semibold text-gray-300">
                             {readingTime} min read
                           </span>
                         </div>
@@ -167,11 +167,11 @@ const Blogs = () => {
 
                     {/* Content */}
                     <div className="flex-1 flex flex-col space-y-4 transition-opacity duration-300 group-hover:opacity-70">
-                      <h2 className="text-xl md:text-2xl font-bold text-black dark:text-white leading-tight">
+                      <h2 className="text-xl md:text-2xl font-bold text-white leading-tight">
                         {blog.title}
                       </h2>
 
-                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3 flex-1">
+                      <p className="text-gray-400 leading-relaxed line-clamp-3 flex-1">
                         {blog.description}
                       </p>
 
