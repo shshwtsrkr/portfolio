@@ -14,6 +14,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/admin/profile")
@@ -32,13 +37,27 @@ public class AdminProfileController {
 
     private Profile ensureProfile(Long id) {
         if (id != null) {
-            return profileService.getProfileById(id)
+            Profile profile = profileService.getProfileById(id)
                     .orElseGet(this::createDefaultProfile);
+            String originalSocials = profile.getSocials();
+            ensureSocialJson(profile);
+            syncLegacySocialFields(profile);
+            if (profile.getId() != null && !Objects.equals(originalSocials, profile.getSocials())) {
+                profileService.updateProfile(profile.getId(), profile);
+            }
+            return profile;
         }
 
-        return profileService.getAllProfiles().stream()
+        Profile profile = profileService.getAllProfiles().stream()
                 .findFirst()
                 .orElseGet(this::createDefaultProfile);
+        String originalSocials = profile.getSocials();
+        ensureSocialJson(profile);
+        syncLegacySocialFields(profile);
+        if (profile.getId() != null && !Objects.equals(originalSocials, profile.getSocials())) {
+            profileService.updateProfile(profile.getId(), profile);
+        }
+        return profile;
     }
 
     private Profile createDefaultProfile() {
@@ -52,7 +71,92 @@ public class AdminProfileController {
         profile.setTechStack(DEFAULT_TECH_STACK_JSON);
         profile.setExpertiseCards(DEFAULT_EXPERTISE_JSON);
         profile.setNameAnimationSpeed(2.5);
+        syncLegacySocialFields(profile);
         return profileService.createProfile(profile);
+    }
+
+    private void syncLegacySocialFields(Profile profile) {
+        String socialsJson = profile.getSocials();
+        if (socialsJson == null || socialsJson.isBlank()) {
+            String rebuilt = buildSocialsFromLegacy(profile);
+            if (rebuilt != null) {
+                profile.setSocials(rebuilt);
+            }
+            return;
+        }
+
+        try {
+            JsonNode socialsNode = objectMapper.readTree(socialsJson);
+            if (socialsNode.isArray()) {
+                String github = null;
+                String linkedin = null;
+                String twitter = null;
+                String email = null;
+
+                for (JsonNode node : socialsNode) {
+                    String platform = node.path("platform").asText("").toLowerCase();
+                    String url = node.path("url").asText(null);
+                    if (url == null || url.isBlank()) {
+                        continue;
+                    }
+
+                    switch (platform) {
+                        case "github" -> github = url;
+                        case "linkedin" -> linkedin = url;
+                        case "twitter", "x" -> twitter = url;
+                        case "email" -> email = url.startsWith("mailto:") ? url.substring("mailto:".length()) : url;
+                    }
+                }
+
+                if (github != null) profile.setGithubUrl(github);
+                if (linkedin != null) profile.setLinkedinUrl(linkedin);
+                if (twitter != null) profile.setTwitterUrl(twitter);
+                if (email != null) profile.setEmailUrl(email);
+            }
+        } catch (Exception ignored) {
+            // Ignore malformed socials JSON
+        }
+    }
+
+    private String buildSocialsFromLegacy(Profile profile) {
+        List<Map<String, String>> socials = new ArrayList<>();
+
+        addSocialEntry(socials, "github", profile.getGithubUrl(), "FaGithub", "#9333ea");
+        addSocialEntry(socials, "linkedin", profile.getLinkedinUrl(), "FaLinkedin", "#2563eb");
+        addSocialEntry(socials, "twitter", profile.getTwitterUrl(), "FaXTwitter", "#0ea5e9");
+        addSocialEntry(socials, "email", profile.getEmailUrl(), "FaEnvelope", "#f43f5e");
+
+        if (socials.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return objectMapper.writeValueAsString(socials);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void addSocialEntry(List<Map<String, String>> socials, String platform, String url, String icon, String color) {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+
+        Map<String, String> entry = new HashMap<>();
+        entry.put("platform", platform);
+        entry.put("url", platform.equals("email") && !url.startsWith("mailto:") ? "mailto:" + url : url);
+        entry.put("icon", icon);
+        entry.put("color", color);
+        socials.add(entry);
+    }
+
+    private void ensureSocialJson(Profile profile) {
+        if (profile.getSocials() == null || profile.getSocials().isBlank()) {
+            String rebuilt = buildSocialsFromLegacy(profile);
+            if (rebuilt != null) {
+                profile.setSocials(rebuilt);
+            }
+        }
     }
 
     private static final String DEFAULT_TYPING_JSON = "[\"Deep Learning Researcher\", \"Computer Vision Expert\", \"DevOps Engineer\"]";
@@ -129,6 +233,8 @@ public class AdminProfileController {
 
     @PostMapping("/save")
     public String saveProfile(@ModelAttribute Profile profile) {
+        ensureSocialJson(profile);
+        syncLegacySocialFields(profile);
         if (profile.getId() != null) {
             profileService.updateProfile(profile.getId(), profile);
         } else {
@@ -143,6 +249,12 @@ public class AdminProfileController {
         Profile profile = profileService.getAllProfiles().stream()
                 .findFirst()
                 .orElse(new Profile());
+        String originalSocials = profile.getSocials();
+        ensureSocialJson(profile);
+        syncLegacySocialFields(profile);
+        if (profile.getId() != null && !Objects.equals(originalSocials, profile.getSocials())) {
+            profileService.updateProfile(profile.getId(), profile);
+        }
         model.addAttribute("profile", profile);
 
         model.addAttribute("typingAnimationJson", prettyJson(profile.getTypingAnimationTexts(), DEFAULT_TYPING_JSON));
@@ -177,6 +289,8 @@ public class AdminProfileController {
             profile.setName(name);
             profile.setTitle(title);
             profile.setAbout(about);
+            ensureSocialJson(profile);
+            syncLegacySocialFields(profile);
             profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Basic info updated!");
@@ -237,6 +351,7 @@ public class AdminProfileController {
             Profile profile = ensureProfile(id);
 
             profile.setSocials(socials);
+            syncLegacySocialFields(profile);
             profileService.updateProfile(profile.getId(), profile);
 
             redirectAttributes.addFlashAttribute("successMessage", "Socials updated!");
