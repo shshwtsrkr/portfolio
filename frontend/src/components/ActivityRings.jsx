@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-const ActivityRings = ({ data, onFilterChange, selectedFilter, colors: customColors }) => {
+const ActivityRings = ({ data, onFilterChange, selectedFilter, colors: customColors, ringSpacing = 16, startRadius = 82 }) => {
   const [animate, setAnimate] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
@@ -40,7 +40,7 @@ const ActivityRings = ({ data, onFilterChange, selectedFilter, colors: customCol
         {/* Rings Container */}
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
           {rings.map((ring, index) => {
-            const radius = 82 - index * 16;
+            const radius = startRadius - index * ringSpacing;
             const circumference = 2 * Math.PI * radius;
             const percentage = totalItems > 0 ? (ring.count / totalItems) * 100 : 0;
             const offset = circumference - (percentage / 100) * circumference;

@@ -143,6 +143,8 @@ const Publications = () => {
                 { color: '#3B82F6', gradient: 'from-blue-500 to-indigo-500' },     // Under Review - Blue
                 { color: '#22C55E', gradient: 'from-green-500 to-emerald-500' },   // Accepted - Green
               ]}
+              ringSpacing={13}
+              startRadius={85}
               onFilterChange={setStatusFilter}
               selectedFilter={statusFilter}
             />
