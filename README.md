@@ -88,20 +88,27 @@ The frontend starts on `http://localhost:5173`
 
 ## Admin Authentication
 
-### Default Credentials
-- **Username**: `admin`
-- **Password**: `admin123`
+### Primary: GitHub OAuth
+- Configure a GitHub OAuth app and expose the credentials via environment variables:
+  - `GITHUB_CLIENT_ID`
+  - `GITHUB_CLIENT_SECRET`
+  - `GITHUB_ALLOWED_LOGINS` (comma-separated GitHub usernames that can access the admin panel)
+- Users click **Authorize via GitHub** on the login page and, after the OAuth flow, are redirected straight to the admin dashboard.
 
-**IMPORTANT**: Change these credentials in production!
+### Fallback: Legacy Credentials
+- A legacy username/password is kept for emergency access (e.g., when GitHub is unavailable).
+- The form is hidden behind a “need the legacy override?” toggle on the login screen.
+- Once signed in, visit **Security** inside the admin terminal to rotate the fallback credentials; updates are stored securely (BCrypt) in MySQL.
+- Initial defaults (only used if no record exists yet): `admin` / `admin123`. Rotate these immediately after deployment.
 
 ### Using Admin Endpoints
 
-All POST, PUT, and DELETE requests require Basic Authentication. GET requests are public.
+All POST, PUT, and DELETE requests require authentication (OAuth session or fallback credentials via Basic Auth). GET requests are public.
 
-Example using curl:
+Example using curl with the fallback account:
 ```bash
 curl -X POST http://localhost:8080/api/blogs \
-  -u admin:admin123 \
+  -u admin:your-new-password \
   -H "Content-Type: application/json" \
   -d '{
     "title": "My First Blog",

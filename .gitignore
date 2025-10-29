@@ -38,6 +38,8 @@ uploads-data/
 # SSL certificates (will be generated)
 certbot-etc/
 certbot-var/
+nginx/mtls/*.key
+
 # Environment configs
 frontend/.env
 frontend/.env.local
