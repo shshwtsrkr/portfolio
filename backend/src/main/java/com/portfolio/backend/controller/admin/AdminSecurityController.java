@@ -6,6 +6,7 @@ import com.portfolio.backend.service.AdminUserService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -27,6 +28,8 @@ public class AdminSecurityController {
         form.setUsername(adminUser.getUsername());
         model.addAttribute("credentialsForm", form);
         model.addAttribute("lastUpdated", adminUser.getUpdatedAt());
+        model.addAttribute("org.springframework.validation.BindingResult.credentialsForm",
+                new BeanPropertyBindingResult(form, "credentialsForm"));
         return "admin/security";
     }
 
