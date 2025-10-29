@@ -26,10 +26,10 @@ public class AdminSecurityController {
         AdminUser adminUser = adminUserService.getActiveAdminUser();
         AdminCredentialsForm form = new AdminCredentialsForm();
         form.setUsername(adminUser.getUsername());
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(form, "credentialsForm");
         model.addAttribute("credentialsForm", form);
         model.addAttribute("lastUpdated", adminUser.getUpdatedAt());
-        model.addAttribute("org.springframework.validation.BindingResult.credentialsForm",
-                new BeanPropertyBindingResult(form, "credentialsForm"));
+        model.addAttribute(BindingResult.MODEL_KEY_PREFIX + "credentialsForm", bindingResult);
         return "admin/security";
     }
 
