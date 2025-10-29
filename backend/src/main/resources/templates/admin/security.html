@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[ SECURITY CONTROL ]</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #000000;
+            border-bottom: 1px solid #ffffff;
+            padding: 20px;
+        }
+
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+
+        .header h1::before {
+            content: '# ';
+        }
+
+        .back-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .panel {
+            border: 1px solid #ffffff;
+            padding: 30px;
+            background: #000000;
+        }
+
+        .panel h2 {
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .panel h2::before {
+            content: '[ ';
+        }
+
+        .panel h2::after {
+            content: ' ]';
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        label::before {
+            content: '> ';
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #000000;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+
+        .input-help {
+            color: #666666;
+            font-size: 11px;
+            margin-top: -12px;
+            margin-bottom: 18px;
+        }
+
+        button {
+            padding: 14px 28px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .status {
+            font-size: 11px;
+            color: #666666;
+            margin-bottom: 24px;
+        }
+
+        .status span {
+            color: #00ff00;
+        }
+
+        .alert {
+            border: 1px solid;
+            padding: 12px;
+            font-size: 11px;
+            margin-bottom: 20px;
+        }
+
+        .alert-error {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .alert-success {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        .error-field {
+            border-color: #ff0000;
+        }
+
+        .error-message {
+            color: #ff0000;
+            font-size: 11px;
+            margin-top: -12px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="header-content">
+        <h1>SECURITY CONTROL</h1>
+        <a href="/admin/dashboard" class="back-link">&larr; back to dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="panel">
+        <h2>// fallback credentials</h2>
+
+        <div class="status" th:text="'last updated: ' + ${#temporals.format(lastUpdated, 'dd MMM yyyy HH:mm:ss')} + ' UTC'">last updated</div>
+
+        <div th:if="${success}" class="alert alert-success">credentials updated successfully</div>
+        <div th:if="${#fields.hasErrors()}" class="alert alert-error">validation failed – please review the fields</div>
+
+        <form th:action="@{/admin/security}" th:object="${credentialsForm}" method="post">
+            <label for="username">username</label>
+            <input type="text" id="username" th:field="*{username}" th:classappend="${#fields.hasErrors('username')} ? ' error-field'">
+            <div class="error-message" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+
+            <label for="password">password</label>
+            <input type="password" id="password" th:field="*{password}" placeholder="enter new password" th:classappend="${#fields.hasErrors('password')} ? ' error-field'">
+            <div class="input-help">minimum 8 characters; stored securely (BCrypt)</div>
+            <div class="error-message" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+
+            <button type="submit">update fallback login</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

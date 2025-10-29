@@ -1,16 +1,14 @@
 package com.portfolio.backend.config;
 
+import com.portfolio.backend.security.GitHubOAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -18,19 +16,19 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   GitHubOAuth2SuccessHandler successHandler) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**", "/h2-console/**", "/admin/api/**", "/admin/blogs/reorder", "/admin/projects/reorder", "/admin/publications/reorder"))
+                        .ignoringRequestMatchers("/api/**", "/h2-console/**", "/admin/api/**",
+                                "/admin/blogs/reorder", "/admin/projects/reorder", "/admin/publications/reorder"))
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
-                        // Allow public GET requests to API
                         .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        // Admin panel - require authentication
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/login", "/login/**").permitAll()
                         .requestMatchers("/admin/**").authenticated()
-                        .requestMatchers("/login").permitAll()
-                        // Require authentication for API create/update/delete
                         .requestMatchers(HttpMethod.POST, "/api/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/**").authenticated()
@@ -41,26 +39,20 @@ public class SecurityConfig {
                         .defaultSuccessUrl("/admin/dashboard", true)
                         .permitAll()
                 )
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/login")
+                        .successHandler(successHandler)
+                        .failureUrl("/login?oauthError")
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-                .httpBasic(basic -> {})
+                .httpBasic(Customizer.withDefaults())
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder().encode("admin123"))
-                .roles("ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(admin);
     }
 
     @Bean
