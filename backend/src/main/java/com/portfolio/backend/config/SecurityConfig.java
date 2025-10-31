@@ -1,6 +1,7 @@
 package com.portfolio.backend.config;
 
 import com.portfolio.backend.security.GitHubOAuth2SuccessHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -16,6 +18,9 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired(required = false)
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -41,13 +46,18 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .defaultSuccessUrl("/admin/dashboard", true)
                         .permitAll()
-                )
-                .oauth2Login(oauth -> oauth
-                        .loginPage("/login")
-                        .successHandler(successHandler)
-                        .failureUrl("/login?oauthError")
-                )
-                .logout(logout -> logout
+                );
+
+        // Only configure OAuth2 login if client registration is available
+        if (clientRegistrationRepository != null) {
+            http.oauth2Login(oauth -> oauth
+                    .loginPage("/login")
+                    .successHandler(successHandler)
+                    .failureUrl("/login?oauthError")
+            );
+        }
+
+        http.logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutRequestMatcher(new OrRequestMatcher(
                                 new AntPathRequestMatcher("/logout", "GET"),
