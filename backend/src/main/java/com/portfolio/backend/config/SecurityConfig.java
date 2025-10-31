@@ -48,13 +48,19 @@ public class SecurityConfig {
                         .permitAll()
                 );
 
-        // Only configure OAuth2 login if client registration is available
+        // Only configure OAuth2 login if client registration is available and has registrations
         if (clientRegistrationRepository != null) {
-            http.oauth2Login(oauth -> oauth
-                    .loginPage("/login")
-                    .successHandler(successHandler)
-                    .failureUrl("/login?oauthError")
-            );
+            try {
+                // Try to get a registration to check if any exist
+                clientRegistrationRepository.findByRegistrationId("github");
+                http.oauth2Login(oauth -> oauth
+                        .loginPage("/login")
+                        .successHandler(successHandler)
+                        .failureUrl("/login?oauthError")
+                );
+            } catch (Exception e) {
+                // No OAuth2 registrations available, skip OAuth2 login configuration
+            }
         }
 
         http.logout(logout -> logout
