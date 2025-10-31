@@ -549,10 +549,28 @@ const Home = () => {
               <motion.a
                 whileHover={{ scale: 1.1, y: -2 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  // Open in new tab
+                  window.open(profile.resumeFileUrl, '_blank');
+
+                  // Download the file with custom filename
+                  try {
+                    const response = await fetch(profile.resumeFileUrl);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'ShashwatSarkar_Resume.pdf';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } catch (error) {
+                    console.error('Failed to download resume:', error);
+                  }
+                }}
                 href={profile.resumeFileUrl}
-                download="Resume.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
                 className="group relative overflow-hidden transition-all duration-300 rounded-2xl p-4 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20"
                 title="Download Resume"
               >
