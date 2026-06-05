@@ -6,8 +6,38 @@ function isSupabaseConfigured() {
   return url.length > 0 && !url.includes('placeholder') && url.includes('.supabase.')
 }
 
-// DEV BYPASS — when Supabase isn't configured, skip all auth checks
+// Force the canonical domain: any other host (e.g. the *.vercel.app URL) is
+// 308-redirected to CANONICAL_HOST, same path preserved. Inert until
+// CANONICAL_HOST is set, so preview/testing on *.vercel.app is unaffected.
+function enforceCanonicalHost(request: NextRequest) {
+  const canonical = process.env.CANONICAL_HOST
+  if (!canonical) return null
+
+  const host = request.headers.get('host') || ''
+  if (host === canonical || host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+    return null
+  }
+
+  const url = new URL(request.url)
+  url.protocol = 'https:'
+  url.host = canonical
+  return NextResponse.redirect(url, 308)
+}
+
 export async function proxy(request: NextRequest) {
+  const hostRedirect = enforceCanonicalHost(request)
+  if (hostRedirect) return hostRedirect
+
+  const pathname = request.nextUrl.pathname
+  const isAdminRoute = pathname.startsWith('/admin')
+  const isLoginPage = pathname === '/login'
+
+  // Only the admin area and login page need a session check.
+  if (!isAdminRoute && !isLoginPage) {
+    return NextResponse.next({ request })
+  }
+
+  // DEV BYPASS — when Supabase isn't configured, skip all auth checks
   if (!isSupabaseConfigured()) {
     return NextResponse.next({ request })
   }
@@ -33,9 +63,6 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-  const isLoginPage = request.nextUrl.pathname === '/login'
-
   if (isAdminRoute && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
@@ -48,5 +75,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login'],
+  // Run on all routes so host enforcement applies site-wide, excluding
+  // Next.js internals and static files (anything with a file extension).
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.\\w+$).*)'],
 }
