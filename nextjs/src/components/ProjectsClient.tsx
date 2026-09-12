@@ -118,7 +118,7 @@ export default function ProjectsClient({ projects, noTopPad, emptyMessage }: { p
                   className="relative overflow-hidden w-full"
                   style={{
                     aspectRatio: '16/9',
-                    background: cardBg(),
+                    background: project.preview_image_url ? '#fff' : cardBg(),
                     padding: '2rem 1rem 1rem',
                   }}
                 >

@@ -123,7 +123,7 @@ export default function PublicationsClient({ publications, noTopPad, emptyMessag
                   className="relative overflow-hidden w-full"
                   style={{
                     aspectRatio: '16/9',
-                    background: cardBg(),
+                    background: pub.thumbnail_url ? '#fff' : cardBg(),
                     padding: '2rem 1rem 1rem',
                   }}
                 >

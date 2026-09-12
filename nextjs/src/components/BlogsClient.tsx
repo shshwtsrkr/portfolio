@@ -48,7 +48,7 @@ export default function BlogsClient({ blogs, noTopPad, emptyMessage }: { blogs: 
                   className="relative overflow-hidden"
                   style={{
                     aspectRatio: '16/9',
-                    background: cardBg(),
+                    background: blog.thumbnail_url ? '#fff' : cardBg(),
                     padding: '2rem 1rem 1rem',
                   }}
                 >

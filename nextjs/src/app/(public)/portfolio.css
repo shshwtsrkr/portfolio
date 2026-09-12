@@ -1,0 +1,257 @@
+/* Academic single-column layout (al-folio proportions) rendered in liquid glass + soft skeuomorphism.
+   Palette, type, and quietness come from globals.css; this file is only structure and surfaces. */
+
+/* ---------- Liquid background: three slow, neutral light/shade clouds for the glass to refract ---------- */
+.liquid-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; opacity: var(--blob-opacity); }
+.liquid-bg .blob { position: absolute; width: 70vmax; height: 70vmax; border-radius: 50%; will-change: transform; transform: translateZ(0); }
+.liquid-bg .blob-1 { top: -18vmax; left: -12vmax; background: radial-gradient(closest-side, var(--blob-1) 0%, color-mix(in srgb, var(--blob-1) 55%, transparent) 30%, color-mix(in srgb, var(--blob-1) 18%, transparent) 60%, transparent 100%); animation: drift-1 38s ease-in-out infinite; }
+.liquid-bg .blob-2 { top: 26vh; right: -20vmax; background: radial-gradient(closest-side, var(--blob-2) 0%, color-mix(in srgb, var(--blob-2) 55%, transparent) 30%, color-mix(in srgb, var(--blob-2) 18%, transparent) 60%, transparent 100%); animation: drift-2 46s ease-in-out infinite; }
+.liquid-bg .blob-3 { bottom: -22vmax; left: 18vw; background: radial-gradient(closest-side, var(--blob-3) 0%, color-mix(in srgb, var(--blob-3) 55%, transparent) 30%, color-mix(in srgb, var(--blob-3) 18%, transparent) 60%, transparent 100%); animation: drift-3 52s ease-in-out infinite; }
+@keyframes drift-1 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(14vw, 10vh) scale(1.12); } 66% { transform: translate(4vw, 26vh) scale(.94); } }
+@keyframes drift-2 { 0%, 100% { transform: translate(0, 0) scale(1); } 40% { transform: translate(-16vw, -10vh) scale(1.08); } 70% { transform: translate(-6vw, 14vh) scale(.9); } }
+@keyframes drift-3 { 0%, 100% { transform: translate(0, 0) scale(1); } 30% { transform: translate(-10vw, -18vh) scale(1.1); } 65% { transform: translate(18vw, -6vh) scale(.96); } }
+
+/* ---------- Glass + skeuomorphic primitives ---------- */
+.glass {
+  position: relative; isolation: isolate;
+  background: linear-gradient(135deg, var(--glass-bg-strong), var(--glass-bg));
+  -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-shade), inset 0 0 28px -14px var(--glass-highlight), 0 18px 40px -22px var(--glass-shadow);
+  transition: box-shadow .35s ease, border-color .35s ease, transform .35s cubic-bezier(.22, 1, .36, 1);
+}
+.glass::before { /* refraction rim: light bends brighter along the top-left edge */
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background: radial-gradient(140% 70% at 18% -12%, var(--glass-gloss), transparent 58%);
+}
+.glass::after { /* sweeping liquid sheen on hover */
+  content: ''; position: absolute; inset: -40% -60%; pointer-events: none; z-index: 0;
+  background: linear-gradient(105deg, transparent 42%, var(--glass-sheen) 50%, transparent 58%);
+  transform: translateX(-70%) skewX(-8deg); opacity: 0; transition: transform .9s cubic-bezier(.22, 1, .36, 1), opacity .3s;
+}
+.glass:hover::after { transform: translateX(70%) skewX(-8deg); opacity: 1; }
+.glass > * { position: relative; z-index: 1; }
+
+.btn {
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: 9px; font: inherit; font-size: 12px; font-weight: 500;
+  color: var(--fg); text-decoration: none; cursor: pointer; background: var(--skeu-face); border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-shade), 0 1px 2px var(--glass-shadow);
+  transition: transform .14s ease, box-shadow .14s ease, background .2s, color .2s, border-color .2s;
+}
+.btn:hover { background: var(--skeu-face-hover); color: var(--accent); transform: translateY(-1px); box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-shade), 0 4px 10px -2px var(--glass-shadow); }
+.btn:active, .btn[aria-expanded="true"] { transform: translateY(1px); background: var(--glass-bg); color: var(--accent); box-shadow: inset 0 2px 5px var(--skeu-well); }
+.btn svg { width: 12px; height: 12px; }
+
+.badge {
+  display: inline-flex; align-items: center; justify-content: center; padding: 5px 9px; border-radius: 7px; font-family: var(--font-mono), monospace; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--accent-ink); background: var(--badge-bg); border: 1px solid var(--badge-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), inset 0 -1px 0 rgba(0, 0, 0, .12), 0 1px 2px var(--glass-shadow); text-decoration: none;
+}
+.badge.outline { color: var(--accent); background: var(--skeu-face); box-shadow: inset 0 1px 0 var(--glass-highlight), 0 1px 2px var(--glass-shadow); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+
+.etched { border: 0; border-top: 1px solid var(--glass-shade); box-shadow: 0 1px 0 var(--glass-highlight); }
+
+.collapsible { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s cubic-bezier(.22, 1, .36, 1); }
+.collapsible[data-open="true"] { grid-template-rows: 1fr; }
+.collapsible > div { overflow: hidden; min-height: 0; }
+
+/* ---------- Fixed top navigation ---------- */
+.site-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* The header's blur lives on a pseudo-layer rather than the header itself: an element with backdrop-filter is a
+   "backdrop root", and its descendants (the mobile dropdown) could then only blur the header, not the page. */
+.site-nav::before { background: radial-gradient(140% 70% at 18% -12%, var(--glass-gloss), transparent 58%), linear-gradient(135deg, var(--glass-bg-strong), var(--glass-bg)); -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%); }
+.site-nav::after { display: none; }
+.nav-inner { width: min(100% - 48px, 930px); margin-inline: auto; height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { font-size: 26px; font-weight: 600; letter-spacing: -.08em; text-decoration: none; color: var(--fg); line-height: 1; }
+.brand span { color: var(--accent); }
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-links { position: relative; display: flex; align-items: center; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.nav-links a { position: relative; z-index: 1; touch-action: manipulation; -webkit-tap-highlight-color: transparent; display: inline-block; padding: 7px 12px; border-radius: 999px; font-size: 13px; color: var(--body-muted); text-decoration: none; letter-spacing: .01em; transition: color .2s; }
+.nav-links a:hover { color: var(--accent); }
+.nav-links a[aria-current="page"] { color: var(--fg); font-weight: 500; }
+.nav-indicator::after { content: ''; position: absolute; inset: 1px; border-radius: inherit; background: linear-gradient(180deg, var(--glass-gloss), transparent 55%); pointer-events: none; }
+.nav-indicator[data-dir="right"] { transition: right var(--lead), left var(--trail); }
+.nav-indicator[data-dir="left"] { transition: left var(--lead), right var(--trail); }
+.nav-indicator {
+  position: absolute; top: 0; bottom: 0; border-radius: 999px; z-index: 0; will-change: left, right;
+  background: var(--skeu-face-hover); border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-shade), inset 0 0 12px -6px var(--glass-highlight), 0 4px 10px -4px var(--glass-shadow);
+  /* Leading edge moves fast, trailing edge catches up: the pill stretches like a drop, then settles. */
+  --lead: .2s cubic-bezier(.2, .9, .3, 1.15); --trail: .55s cubic-bezier(.22, 1, .36, 1);
+}
+.nav-burger { display: none; width: 38px; height: 38px; border-radius: 10px; place-items: center; }
+.skip-link { position: absolute; top: -100px; left: 20px; padding: 12px; background: var(--bg); z-index: 100; }
+.skip-link:focus { top: 12px; }
+
+.theme-switch { touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; width: 50px; height: 28px; flex: 0 0 50px; border-radius: 14px; border: 1px solid var(--glass-border); background: var(--glass-bg); cursor: pointer; padding: 0; box-shadow: inset 0 2px 5px var(--skeu-well), 0 1px 0 var(--glass-highlight); transition: background .25s; }
+.theme-switch .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: var(--accent); background: var(--skeu-face); box-shadow: inset 0 1px 0 var(--glass-highlight), 0 1px 3px var(--glass-shadow); will-change: transform; transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.theme-switch[data-on="true"] .knob { transform: translateX(22px); }
+.theme-switch:hover .knob { background: var(--skeu-face-hover); }
+
+/* ---------- Page shell & post header ---------- */
+.portfolio-shell { width: min(100% - 48px, 930px); margin-inline: auto; padding-top: 108px; animation: melt-in .6s cubic-bezier(.22, 1, .36, 1) both; }
+.post-header { margin-bottom: 26px; }
+.post-header h1 { font-size: clamp(32px, 4.2vw, 46px); font-weight: 600; letter-spacing: -.045em; line-height: 1.12; }
+.post-header .desc { margin-top: 8px; font-size: 15px; color: var(--body-muted); }
+
+/* ---------- About: floated profile picture + bio ---------- */
+.about-article { font-size: 14.5px; line-height: 1.85; color: var(--body-muted); }
+.profile { float: right; width: 30%; margin: 4px 0 12px 28px; }
+.profile-frame { display: block; padding: 7px; border-radius: 18px; overflow: hidden; }
+.profile-frame img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--glass-border), inset 0 12px 24px -16px rgba(0, 0, 0, .45); }
+.profile-frame .photo { position: relative; border-radius: 12px; overflow: hidden; }
+.profile-frame .photo::after { content: ''; position: absolute; inset: 0; border-radius: 12px; pointer-events: none; box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -18px 30px -16px rgba(0, 0, 0, .45); background: linear-gradient(160deg, var(--glass-gloss) 0%, transparent 38%); }
+.profile-caption { margin-top: 8px; text-align: right; font-family: var(--font-mono), monospace; font-size: 10.5px; letter-spacing: .04em; color: var(--muted); }
+.about-article p + p { margin-top: 14px; }
+.bio-highlight { color: var(--fg); font-weight: 500; }
+.clearfix::after { content: ''; display: table; clear: both; }
+
+.social-row { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; margin: 30px 0 10px; }
+.social-link { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: var(--body-muted); background: var(--skeu-face); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-shade), 0 2px 4px -1px var(--glass-shadow); transition: transform .18s cubic-bezier(.34, 1.4, .64, 1), color .18s, box-shadow .18s; }
+.social-link:hover { color: var(--accent); transform: translateY(-2px) scale(1.04); box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-shade), 0 8px 16px -6px var(--glass-shadow); }
+.social-link:active { transform: translateY(1px); box-shadow: inset 0 2px 5px var(--skeu-well); }
+.social-row .btn { margin-left: 6px; padding: 10px 16px; border-radius: 999px; font-size: 12.5px; }
+
+/* ---------- Section headings ---------- */
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 48px 0 18px; padding-top: 18px; }
+.section-head h2 { font-size: 22px; font-weight: 500; letter-spacing: -.03em; text-transform: lowercase; }
+.section-head h2 a { color: inherit; text-decoration: none; }
+.section-head h2 a:hover { color: var(--accent); }
+.section-link { font-size: 12.5px; color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.section-link:hover { text-decoration: underline; }
+.portfolio-shell > .section-head:first-of-type { margin-top: 8px; }
+.page-title.section-head { margin-top: 0; padding-top: 0; border: 0; box-shadow: none; }
+.page-title h2 { font-size: clamp(30px, 4vw, 40px); font-weight: 600; letter-spacing: -.045em; }
+.page-note { margin: -6px 0 22px; max-width: 70ch; font-size: 14px; line-height: 1.7; color: var(--body-muted); }
+.page-note p + p, .empty-note p + p { margin-top: 8px; }
+.search-well { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; height: 36px; border-radius: 10px; color: var(--body-muted); background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: inset 0 2px 5px var(--skeu-well), 0 1px 0 var(--glass-highlight); transition: box-shadow .2s, border-color .2s; }
+.search-well:focus-within { border-color: color-mix(in srgb, var(--accent) 60%, transparent); box-shadow: inset 0 2px 5px var(--skeu-well), 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.search-well input { width: 170px; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 12.5px; color: var(--fg); }
+.search-well input::placeholder { color: var(--body-muted); opacity: .8; }
+.empty-note { padding: 28px 0 44px; font-size: 14px; color: var(--body-muted); }
+
+/* ---------- Publications: bibliography rows ---------- */
+.bibliography { list-style: none; margin: 0; padding: 0; }
+.year-heading { margin: 26px 0 8px; padding-top: 10px; text-align: right; font-family: var(--font-mono), monospace; font-size: 12px; letter-spacing: .1em; color: var(--muted); }
+.bib-entry { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 20px; padding: 20px 0; animation: arrive .4s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.bib-entry + .bib-entry { border-top: 1px solid var(--glass-shade); box-shadow: inset 0 1px 0 var(--glass-highlight); }
+.bib-abbr { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.bib-abbr .badge { width: 100%; }
+.badge.venue { color: var(--venue-fg); background: var(--venue-bg); border-color: transparent; font-family: var(--font-display), sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 6px 10px; border-radius: 6px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -1px 0 rgba(0, 0, 0, .22), 0 1px 2px var(--glass-shadow); }
+.bib-title { font-size: 16px; font-weight: 600; letter-spacing: -.02em; line-height: 1.45; color: var(--fg); }
+.bib-authors { margin-top: 5px; font-size: 13px; color: var(--body-muted); line-height: 1.6; }
+.bib-authors em { font-style: normal; color: var(--fg); border-bottom: 1px solid currentColor; }
+.bib-periodical { margin-top: 3px; font-size: 12.5px; color: var(--body-muted); }
+.bib-periodical .venue { font-style: italic; }
+.bib-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.bib-cites { font-family: var(--font-mono), monospace; font-size: 11px; color: var(--muted); margin-left: 4px; }
+.bib-abstract > div > div { margin-top: 12px; padding: 14px 16px; border-radius: 12px; font-size: 13px; line-height: 1.8; color: var(--body-muted); }
+
+/* ---------- Shared prose (markdown) ---------- */
+.prose { font-size: 13.5px; line-height: 1.8; color: var(--body-muted); overflow-wrap: anywhere; }
+.prose p + p { margin-top: 10px; }
+.prose ul, .prose ol { padding-left: 20px; list-style: revert; }
+.prose li + li { margin-top: 3px; }
+.prose a, a.md-link { color: var(--link); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+.prose a:hover, a.md-link:hover { text-decoration-thickness: 2px; }
+.prose pre { max-width: 100%; overflow-x: auto; padding: 12px; border-radius: 8px; background: var(--bg); }
+.prose code { font-family: var(--font-mono), monospace; font-size: .9em; }
+.prose img { max-width: 100%; border-radius: 8px; }
+.prose h1, .prose h2, .prose h3 { font-size: 1.05em; font-weight: 600; color: var(--fg); margin: 14px 0 6px; }
+
+/* ---------- Projects: same rows as the bibliography ---------- */
+.bib-date { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: .04em; color: var(--muted); text-align: center; }
+.bib-thumb { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; border: 1px solid var(--glass-border); margin-top: 2px; }
+.mono-meta { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: .04em; color: var(--muted); }
+.bib-desc { margin-top: 8px; max-width: 78ch; }
+
+/* ---------- Experience: CV-style rows ---------- */
+.work-list { display: flex; flex-direction: column; }
+.work-item { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 22px 0; animation: arrive .4s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.work-item + .work-item { border-top: 1px solid var(--glass-shade); box-shadow: inset 0 1px 0 var(--glass-highlight); }
+.work-dates { font-family: var(--font-mono), monospace; font-size: 11.5px; letter-spacing: .04em; color: var(--muted); line-height: 1.7; }
+.work-dates .current { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--accent); }
+.work-dates .current::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255, 255, 255, .5); animation: pulse 2.4s ease-in-out infinite; }
+.work-position { font-size: 17px; font-weight: 600; letter-spacing: -.02em; line-height: 1.4; }
+.work-company { color: var(--accent); font-weight: 500; }
+.work-desc { margin-top: 10px; max-width: 78ch; }
+.work-item.compact { padding: 12px 0; grid-template-columns: 150px minmax(0, 1fr); }
+.work-item.compact .work-position { font-size: 15px; font-weight: 500; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); } 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 8%, transparent); } }
+
+/* ---------- Writing: post list ---------- */
+.post-list { list-style: none; margin: 0; padding: 0; }
+.post-item { padding: 22px 0; animation: arrive .4s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.post-item + .post-item { border-top: 1px solid var(--glass-shade); box-shadow: inset 0 1px 0 var(--glass-highlight); }
+.post-item h3 { font-size: 18px; font-weight: 600; letter-spacing: -.025em; line-height: 1.4; }
+.post-item h3 a { color: inherit; text-decoration: none; }
+.post-item h3 a:hover { color: var(--accent); }
+.post-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: .04em; color: var(--muted); }
+.post-meta .badge { padding: 3px 7px; font-size: 9.5px; }
+.post-excerpt { margin-top: 10px; max-width: 80ch; }
+.post-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.post-body > div > div { margin-top: 12px; padding: 16px 18px; border-radius: 12px; }
+.post-thumb { display: block; width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; margin-bottom: 14px; }
+
+/* ---------- Cursor tag: a tiny glass pill with a mouse-wheel that ticks downward ---------- */
+.cursor-tag { position: fixed; top: 0; left: 0; z-index: 200; pointer-events: none; opacity: 0; transition: opacity .25s ease; will-change: transform; }
+.cursor-tag-pill {
+  display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 7px; border-radius: 999px;
+  font-family: var(--font-display), sans-serif; font-size: 11.5px; font-weight: 500; letter-spacing: .02em; color: var(--fg);
+  background: linear-gradient(135deg, var(--glass-bg-strong), var(--glass-bg)); border: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 var(--glass-shade), 0 6px 14px -6px var(--glass-shadow);
+}
+.cursor-tag-wheel { position: relative; width: 10px; height: 15px; border-radius: 6px; border: 1.5px solid var(--accent); }
+.cursor-tag-wheel::before { content: ''; position: absolute; left: 50%; top: 3px; width: 2px; height: 3px; margin-left: -1px; border-radius: 1px; background: var(--accent); animation: wheel-tick 1.6s ease-in-out infinite; }
+@keyframes wheel-tick { 0%, 20% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(5px); opacity: 0; } 71%, 100% { transform: translateY(0); opacity: 0; } }
+@media (hover: none) { .cursor-tag { display: none; } }
+
+/* ---------- Footer ---------- */
+.site-footer { margin-top: 64px; padding: 30px 0 40px; text-align: center; font-size: 12px; color: var(--body-muted); }
+.site-footer a { color: inherit; text-decoration: none; }
+.site-footer a:hover { color: var(--accent); }
+.site-footer .dot { margin: 0 8px; opacity: .5; }
+
+@keyframes arrive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes melt-in { from { opacity: 0; filter: blur(10px); transform: translateY(10px) scale(.995); } 60% { filter: blur(0); } to { opacity: 1; filter: blur(0); transform: none; } }
+
+/* Theme toggle: the new theme pours out of the switch as a circular glass wipe (View Transitions API). */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; animation: theme-pour .65s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes theme-pour { from { clip-path: circle(0px at var(--vt-x, 100%) var(--vt-y, 0%)); } to { clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 100%) var(--vt-y, 0%)); } }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 760px) {
+  .nav-burger { display: grid; }
+  .nav-links { position: absolute; top: calc(100% + 8px); left: 16px; right: 16px; flex-direction: column; align-items: stretch; gap: 2px; padding: 8px; border-radius: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--surface) 72%, transparent), color-mix(in srgb, var(--surface) 55%, transparent)); -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%); border: 1px solid var(--glass-border); box-shadow: inset 0 1px 0 var(--glass-highlight), 0 18px 40px -18px var(--glass-shadow); opacity: 0; transform: translateY(-8px) scale(.98); pointer-events: none; transition: opacity .25s, transform .35s cubic-bezier(.22, 1, .36, 1); }
+  .site-nav[data-open="true"] .nav-links { opacity: 1; transform: none; pointer-events: auto; }
+  .nav-links a { padding: 11px 14px; border-radius: 10px; font-size: 14px; }
+  .nav-links a[aria-current="page"] { background: var(--glass-bg-strong); box-shadow: inset 0 1px 0 var(--glass-highlight); }
+  .nav-indicator { display: none; }
+  .nav-inner { width: calc(100% - 32px); height: 58px; }
+  .portfolio-shell { width: calc(100% - 32px); padding-top: 92px; }
+  .post-header h1 { font-size: 32px; }
+  .profile { width: 38%; margin-left: 18px; }
+  .bib-entry { grid-template-columns: 1fr; gap: 10px; }
+  .bib-abbr { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .bib-abbr .badge { width: auto; }
+  .bib-thumb { width: 120px; }
+  .work-item, .work-item.compact { grid-template-columns: 1fr; gap: 6px; }
+  /* On narrow screens the company drops to its own line instead of wrapping mid-name. */
+  .work-company { display: block; margin-top: 2px; font-size: .92em; }
+  .section-head { margin-top: 36px; flex-wrap: wrap; }
+  .search-well input { width: 120px; }
+}
+@media (max-width: 520px) {
+  .profile { float: none; width: min(62%, 240px); margin: 0 auto 20px; }
+  .profile-caption { text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Reduce, don't remove: decorative motion stops, short state transitions (pill, switch, panels) stay. */
+  .liquid-bg .blob, .portfolio-shell, .bib-entry, .work-item, .post-item, .work-dates .current::before { animation: none !important; }
+  .glass::after { transition: none; opacity: 0 !important; }
+  html { scroll-behavior: auto !important; }
+}

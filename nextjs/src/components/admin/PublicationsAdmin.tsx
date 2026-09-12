@@ -93,8 +93,8 @@ export default function PublicationsAdmin({ initialPublications, devMode }: { in
               <Field label="Venue / Conference / Journal" value={editing.venue || ''} onChange={(v) => setEditing({ ...editing, venue: v })} />
               <Field label="Year" value={String(editing.publication_year || '')} onChange={(v) => setEditing({ ...editing, publication_year: Number(v) })} type="number" />
             </div>
-            <Field label="Abstract" value={editing.abstract_text || ''} onChange={(v) => setEditing({ ...editing, abstract_text: v })} multiline />
-            <ImageUpload label="Thumbnail" value={editing.thumbnail_url || ''} onChange={(v) => setEditing({ ...editing, thumbnail_url: v })} devMode={devMode} />
+            <Field label="Abstract (Markdown — links as [text](https://…))" value={editing.abstract_text || ''} onChange={(v) => setEditing({ ...editing, abstract_text: v })} multiline />
+            <ImageUpload label="Thumbnail" value={editing.thumbnail_url || ''} onChange={(v) => setEditing({ ...editing, thumbnail_url: v })} devMode={devMode} contextUrl={editing.code_url || ''} />
             <div className="flex gap-4">
               <Field label="DOI" value={editing.doi || ''} onChange={(v) => setEditing({ ...editing, doi: v })} />
               <Field label="PDF URL" value={editing.pdf_url || ''} onChange={(v) => setEditing({ ...editing, pdf_url: v })} />

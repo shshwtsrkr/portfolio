@@ -1,10 +1,10 @@
-import ScrollPage from '@/components/ScrollPage'
+import SitePage from '@/components/SitePage'
 import { getPublicPageData } from '@/lib/public-page-data'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export default async function HomePage() {
+export default async function AboutPage() {
   const data = await getPublicPageData()
-  return <ScrollPage {...data} />
+  return <SitePage section="about" {...data} />
 }

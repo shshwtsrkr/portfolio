@@ -1,34 +1,78 @@
 @import "tailwindcss";
 
-/* Claude orange accent — keep consistent across all UI */
-/* ── Dark mode (default) ─────────────────────────────── */
+/* Light: true neutrals. Dark: cool slate-charcoal (not black) so the warm amber accent reads editorial, not neon. */
 :root {
-  --bg: #0C0C0C;
-  --fg: #F0EDE8;
-  --accent: #D97757;
-  --muted: #6B6860;
-  --body-muted: #B8B1A6;
-  --border: rgba(240, 237, 232, 0.10);
-  --card-bg: #111111;
-  --nav-bg: rgba(12, 12, 12, 0.92);
-  --modal-bg: #111111;
-  --timeline-line: rgba(240, 237, 232, 0.22);
-  --timeline-node: rgba(240, 237, 232, 0.45);
+  --bg: #15171C;
+  --surface: #21242B;
+  --fg: #E9EAEE;
+  --link: #8AB4FF;
+  --accent: #E6B85C;
+  --accent-ink: #E6B85C;
+  --badge-bg: color-mix(in srgb, #E6B85C 14%, transparent);
+  --badge-border: color-mix(in srgb, #E6B85C 36%, transparent);
+  /* Venue pill: al-folio green, solid in both themes */
+  --venue-bg: linear-gradient(180deg, #5BA32B, #4E8C20);
+  --venue-fg: #FFFFFF;
+  --muted: #9A9EA8;
+  --body-muted: #AEB2BB;
+  --border: #2C3038;
+  --card-bg: #1B1E24;
+  --nav-bg: #15171CF2;
+  --modal-bg: #21242B;
+  --timeline-line: #2C3038;
+  --timeline-node: #9A9EA8;
+  /* Liquid glass: translucent surfaces, refraction rims, and the goo behind them. */
+  --glass-bg: rgba(21, 23, 28, 0.35);
+  --glass-bg-strong: rgba(33, 36, 43, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-highlight: rgba(255, 255, 255, 0.10);
+  --glass-shade: rgba(0, 0, 0, 0.45);
+  --glass-gloss: rgba(255, 255, 255, 0.04);
+  --glass-sheen: rgba(255, 255, 255, 0.05);
+  --glass-shadow: rgba(0, 0, 0, 0.6);
+  --skeu-face: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  --skeu-face-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  --skeu-well: rgba(0, 0, 0, 0.5);
+  /* Shade-only clouds in dark mode: depth without any light-grey patches. */
+  --blob-1: #1E2128;
+  --blob-2: #0C0D11;
+  --blob-3: #1B1E25;
+  --blob-opacity: 1;
 }
-
-/* ── Light mode ──────────────────────────────────────── */
 :root[data-theme="light"] {
-  --bg: #F0EDE4;
-  --fg: #1A1A18;
-  --accent: #D97757;
-  --muted: #8A847C;
-  --body-muted: #3B3934;
-  --border: rgba(26, 26, 24, 0.12);
-  --card-bg: #E8E4DC;
-  --nav-bg: rgba(240, 237, 228, 0.92);
-  --modal-bg: #E8E4DC;
-  --timeline-line: rgba(26, 26, 24, 0.22);
-  --timeline-node: rgba(26, 26, 24, 0.45);
+  --bg: #F4F4F4;
+  --surface: #FFFFFF;
+  --fg: #1C1C1C;
+  --link: #1A5FD0;
+  --accent: #B8741F;
+  --accent-ink: #FFFFFF;
+  --badge-bg: linear-gradient(180deg, color-mix(in srgb, #B8741F 90%, white), #B8741F);
+  --badge-border: transparent;
+  --venue-bg: linear-gradient(180deg, #5BA32B, #4E8C20);
+  --venue-fg: #FFFFFF;
+  --muted: #6E6E6E;
+  --body-muted: #5C5C5C;
+  --border: #E0E0E0;
+  --card-bg: #EBEBEB;
+  --nav-bg: #F4F4F4F2;
+  --modal-bg: #FFFFFF;
+  --timeline-line: #E0E0E0;
+  --timeline-node: #6E6E6E;
+  --glass-bg: rgba(255, 255, 255, 0.18);
+  --glass-bg-strong: rgba(255, 255, 255, 0.38);
+  --glass-border: rgba(20, 20, 20, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --glass-shade: rgba(20, 20, 20, 0.10);
+  --glass-gloss: rgba(255, 255, 255, 0.6);
+  --glass-sheen: rgba(255, 255, 255, 0.55);
+  --glass-shadow: rgba(20, 20, 20, 0.22);
+  --skeu-face: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.35));
+  --skeu-face-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.55));
+  --skeu-well: rgba(20, 20, 20, 0.12);
+  --blob-1: #FFFFFF;
+  --blob-2: #E2E2E0;
+  --blob-3: #FFFFFF;
+  --blob-opacity: .9;
 }
 
 @theme inline {
@@ -46,15 +90,16 @@ html {
   color: var(--fg);
 }
 
-/* Offset scroll target so the fixed 48px nav doesn't cover section tops */
-section[id^="section-"] { scroll-margin-top: 48px; }
+/* Offset scroll targets so the fixed nav doesn't cover section tops */
+h2, section[id] { scroll-margin-top: 84px; }
 
 body {
-  background: var(--bg);
+  /* Transparent so the fixed liquid background (z-index -1) shows through; html paints the base colour. */
+  background: transparent;
   color: var(--fg);
   font-family: var(--font-display), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  transition: background 0.25s, color 0.25s;
+  transition: color 0.25s;
 }
 
 .mono { font-family: var(--font-mono), monospace; }

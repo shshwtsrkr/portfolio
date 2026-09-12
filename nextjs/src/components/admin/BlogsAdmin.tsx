@@ -8,7 +8,7 @@ import ImageUpload from './ImageUpload'
 
 const EMPTY: Partial<Blog> = {
   title: '', description: '', date: new Date().toISOString().split('T')[0],
-  thumbnail_url: '', external_url: '', read_duration: 5,
+  thumbnail_url: '', external_url: '', read_duration: 5, tag: '', content: '',
   display_order: 0, is_published: false,
 }
 
@@ -88,8 +88,10 @@ export default function BlogsAdmin({ initialBlogs, devMode }: { initialBlogs: Bl
           <h2 className="text-xl font-semibold mb-4">{editing.id ? 'Edit Blog' : 'New Blog'}</h2>
           <div className="grid gap-4">
             <Field label="Title" value={editing.title || ''} onChange={(v) => setEditing({ ...editing, title: v })} required />
-            <Field label="Description" value={editing.description || ''} onChange={(v) => setEditing({ ...editing, description: v })} multiline />
-            <ImageUpload label="Thumbnail" value={editing.thumbnail_url || ''} onChange={(v) => setEditing({ ...editing, thumbnail_url: v })} devMode={devMode} />
+            <Field label="Description (short excerpt shown in the list — Markdown)" value={editing.description || ''} onChange={(v) => setEditing({ ...editing, description: v })} multiline />
+            <Field label="Content (optional — full article in Markdown, readable inline via the “Read” button)" value={editing.content || ''} onChange={(v) => setEditing({ ...editing, content: v })} multiline rows={10} />
+            <Field label="Tag (e.g. ML, DevOps)" value={editing.tag || ''} onChange={(v) => setEditing({ ...editing, tag: v })} />
+            <ImageUpload label="Thumbnail" value={editing.thumbnail_url || ''} onChange={(v) => setEditing({ ...editing, thumbnail_url: v })} devMode={devMode} contextUrl={editing.external_url || ''} />
             <Field label="Date" value={editing.date || ''} onChange={(v) => setEditing({ ...editing, date: v })} type="date" />
             <Field label="External URL" value={editing.external_url || ''} onChange={(v) => setEditing({ ...editing, external_url: v })} />
             <div className="flex gap-4">
@@ -142,15 +144,15 @@ export default function BlogsAdmin({ initialBlogs, devMode }: { initialBlogs: Bl
   )
 }
 
-function Field({ label, value, onChange, type = 'text', multiline = false, required = false }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; multiline?: boolean; required?: boolean
+function Field({ label, value, onChange, type = 'text', multiline = false, required = false, rows = 3 }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; multiline?: boolean; required?: boolean; rows?: number
 }) {
   const cls = 'w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30'
   return (
     <label className="block">
       <span className="text-xs text-gray-400 mb-1 block">{label}{required && ' *'}</span>
       {multiline
-        ? <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={cls} />
+        ? <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows} className={cls} />
         : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
       }
     </label>

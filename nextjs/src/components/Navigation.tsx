@@ -1,180 +1,125 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { FaLightbulb, FaRegLightbulb } from 'react-icons/fa6'
+import { usePathname } from 'next/navigation'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi'
 
-const NAV = [
-  { label: 'Profile', path: '/' },
-  { label: 'Publications', path: '/publications' },
-  { label: 'Projects', path: '/projects' },
-  { label: 'Blogs', path: '/blogs' },
+// Warm the CV on hover so the viewer tab opens from cache instead of waiting on the upstream fetch.
+let resumeWarmed = false
+export const warmResume = () => {
+  if (resumeWarmed) return
+  resumeWarmed = true
+  fetch('/api/resume', { priority: 'low' } as RequestInit).catch(() => { resumeWarmed = false })
+}
+
+// Survives remounts within the SPA so the pill always animates from where it last was.
+let rememberedPill: { left: number; right: number } | null = null
+
+export const NAV_LINKS = [
+  { href: '/', label: 'about' },
+  { href: '/publications', label: 'publications' },
+  { href: '/projects', label: 'projects' },
+  { href: '/experience', label: 'work' },
+  { href: '/blogs', label: 'writing' },
 ]
 
-const SECTION_MAP: Record<string, string> = {
-  '/': 'section-profile',
-  '/publications': 'section-publications',
-  '/projects': 'section-projects',
-  '/blogs': 'section-blogs',
-}
-
-// Custom rAF smooth scroll — always animates, ignores prefers-reduced-motion
-// short-circuiting and any stale native scroll behaviour.
-let scrollRAF: number | null = null
-function smoothScrollTo(targetY: number, duration = 650) {
-  if (scrollRAF) cancelAnimationFrame(scrollRAF)
-  const startY = window.scrollY
-  const dist = targetY - startY
-  if (Math.abs(dist) < 2) return
-  const start = performance.now()
-  // easeInOutCubic
-  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
-
-  const step = (now: number) => {
-    const elapsed = now - start
-    const t = Math.min(elapsed / duration, 1)
-    window.scrollTo(0, startY + dist * ease(t))
-    if (t < 1) {
-      scrollRAF = requestAnimationFrame(step)
-    } else {
-      scrollRAF = null
-    }
-  }
-  scrollRAF = requestAnimationFrame(step)
-}
-
-export default function Navigation() {
+export default function Navigation({ hasResume, name }: { hasResume?: boolean; name: string }) {
   const pathname = usePathname()
-  const router = useRouter()
-  const [theme, setTheme] = useState<'dark' | 'light'>('light')
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [activePath, setActivePath] = useState(pathname)
+  const [theme, setTheme] = useState('light')
+  const [open, setOpen] = useState(false)
+  const listRef = useRef<HTMLUListElement>(null)
+  const [indicator, setIndicator] = useState<{ left: number; right: number; dir?: 'left' | 'right' } | null>(null)
 
-  useEffect(() => {
-    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null
-    const t = saved || 'light'
-    setTheme(t)
-    document.documentElement.setAttribute('data-theme', t)
-  }, [])
-
-  // Listen for scroll-based section changes from ScrollPage
-  useEffect(() => {
-    const handler = (e: Event) => setActivePath((e as CustomEvent<string>).detail)
-    window.addEventListener('sectionchange', handler)
-    return () => window.removeEventListener('sectionchange', handler)
-  }, [])
-
-  useEffect(() => { setActivePath(pathname) }, [pathname])
-  useEffect(() => { setMenuOpen(false) }, [pathname])
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    localStorage.setItem('theme', next)
-    document.documentElement.setAttribute('data-theme', next)
+  // Sections switch instantly on the client: push the URL (the App Router syncs usePathname) and
+  // let SitePage re-render from data it already has. Modified clicks keep default browser behaviour.
+  const go = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+    e.preventDefault()
+    setOpen(false)
+    if (href !== pathname) { window.history.pushState(null, '', href); window.scrollTo({ top: 0 }) }
   }
 
-  // Scroll to section if present on the current page, else route
-  const navigate = (path: string) => {
-    const el = document.getElementById(SECTION_MAP[path])
-    if (el) {
-      const targetY = Math.max(el.getBoundingClientRect().top + window.scrollY - 48, 0)
-      smoothScrollTo(targetY)
-    } else {
-      router.push(path)
+  useEffect(() => {
+    const syncTheme = () => setTheme(document.documentElement.getAttribute('data-theme') || 'light')
+    syncTheme()
+    const observer = new MutationObserver(syncTheme)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
+
+  // The pill is positioned by its left/right insets; CSS gives the leading edge a faster
+  // transition than the trailing one, so it stretches toward the new link and settles.
+  const lastRef = useRef<{ left: number; right: number } | null>(null)
+  const rafRef = useRef(0)
+  // Move the pill onto `target`. Called optimistically on pointer-down (before the route loads)
+  // and again once the pathname settles, which is a no-op if the pill is already there.
+  const moveTo = (target: HTMLElement | null, animate: boolean) => {
+    if (!target || !listRef.current) { lastRef.current = null; return setIndicator(null) }
+    const list = listRef.current.getBoundingClientRect()
+    const rect = target.getBoundingClientRect()
+    const next = { left: rect.left - list.left, right: list.right - rect.right }
+    const mounted = lastRef.current !== null
+    const last = lastRef.current ?? rememberedPill
+    if (last && Math.abs(last.left - next.left) < 1 && Math.abs(last.right - next.right) < 1 && mounted) return
+    lastRef.current = next
+    rememberedPill = next
+    if (!animate || !last || Math.abs(last.left - next.left) < 1) return setIndicator(next)
+    const dir = next.left > last.left ? 'right' : 'left'
+    if (mounted) return setIndicator({ ...next, dir })
+    // Fresh mount: paint at the previous position first, then let the transition carry it over.
+    setIndicator(last)
+    rafRef.current = requestAnimationFrame(() => { rafRef.current = requestAnimationFrame(() => setIndicator({ ...next, dir })) })
+  }
+  useLayoutEffect(() => {
+    moveTo(listRef.current?.querySelector<HTMLAnchorElement>('a[aria-current="page"]') ?? null, true)
+    const onResize = () => moveTo(listRef.current?.querySelector<HTMLAnchorElement>('a[aria-current="page"]') ?? null, false)
+    window.addEventListener('resize', onResize)
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(rafRef.current) }
+  }, [pathname])
+
+  const toggleTheme = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const next = theme === 'light' ? 'dark' : 'light'
+    const apply = () => {
+      document.documentElement.setAttribute('data-theme', next)
+      try { localStorage.setItem('theme', next) } catch { /* Theme still works without storage. */ }
     }
-    setMenuOpen(false)
+    const root = document.documentElement
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
+    if (!doc.startViewTransition) return apply()
+    // Circular wipe centred on the switch, large enough to reach the farthest viewport corner.
+    const r = e.currentTarget.getBoundingClientRect()
+    const x = r.left + r.width / 2, y = r.top + r.height / 2
+    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
+    root.style.setProperty('--vt-x', `${x}px`)
+    root.style.setProperty('--vt-y', `${y}px`)
+    root.style.setProperty('--vt-r', `${radius}px`)
+    doc.startViewTransition(apply)
   }
 
   return (
-    <>
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 h-12"
-        style={{ borderBottom: '1px solid var(--border)', background: 'var(--nav-bg)', backdropFilter: 'blur(8px)' }}
-      >
-        <Link href="/" className="mono text-xs tracking-widest uppercase" style={{ color: 'var(--fg)', letterSpacing: '0.2em', fontWeight: 500 }}>
-          S·S
-        </Link>
-
-        <div className="hidden sm:flex items-center gap-6 md:gap-8">
-          {NAV.map((item) => {
-            const active = activePath === item.path
-            return (
-              <button key={item.path}
-                onClick={() => navigate(item.path)}
-                className="mono tracking-widest uppercase transition-opacity duration-150"
-                style={{ fontSize: '0.82rem', color: active ? 'var(--accent)' : 'var(--fg)', letterSpacing: '0.14em', fontWeight: active ? 700 : 500, opacity: active ? 1 : 0.65, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                onMouseEnter={(e) => { if (!active) e.currentTarget.style.opacity = '1' }}
-                onMouseLeave={(e) => { if (!active) e.currentTarget.style.opacity = '0.65' }}
-              >
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="flex items-center justify-center"
-            style={{
-              width: 32,
-              height: 32,
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              padding: 0,
-              color: theme === 'light' ? 'var(--accent)' : 'var(--fg)',
-              transition: 'color 0.15s, transform 0.15s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
-          >
-            {theme === 'light' ? <FaLightbulb size={18} /> : <FaRegLightbulb size={18} />}
+    <header className="site-nav glass" data-open={open}>
+      <a className="skip-link" href="#main">Skip to content</a>
+      <div className="nav-inner">
+        <Link href="/" className="brand" aria-label={`${name} — home`}>ss<span>.</span></Link>
+        <div className="nav-right">
+          <nav aria-label="Site">
+            <ul className="nav-links" ref={listRef} id="site-menu">
+              {indicator && <li aria-hidden="true" className="nav-indicator" data-dir={indicator.dir} style={{ left: indicator.left, right: indicator.right }} />}
+              {NAV_LINKS.map(link => (
+                <li key={link.href}><Link href={link.href} prefetch={false} aria-current={pathname === link.href ? 'page' : undefined} onPointerDown={e => moveTo(e.currentTarget, true)} onClick={e => go(e, link.href)}>{link.label}</Link></li>
+              ))}
+              {hasResume && <li><a href="/api/resume" target="_blank" rel="noopener noreferrer" onPointerEnter={warmResume} onFocus={warmResume}>cv</a></li>}
+            </ul>
+          </nav>
+          <button type="button" className="theme-switch" data-on={theme === 'dark'} role="switch" aria-checked={theme === 'dark'} aria-label="Dark mode" onClick={toggleTheme}>
+            <span className="knob">{theme === 'dark' ? <FiMoon size={11} /> : <FiSun size={11} />}</span>
           </button>
-
-          <button
-            className="sm:hidden flex flex-col gap-[5px] p-1"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Menu"
-            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            <span style={{ display: 'block', width: '18px', height: '1px', background: menuOpen ? 'var(--accent)' : 'var(--fg)', transition: 'background 0.15s, transform 0.2s', transform: menuOpen ? 'translateY(6px) rotate(45deg)' : 'none' }} />
-            <span style={{ display: 'block', width: '18px', height: '1px', background: menuOpen ? 'transparent' : 'var(--fg)', transition: 'background 0.15s' }} />
-            <span style={{ display: 'block', width: '18px', height: '1px', background: menuOpen ? 'var(--accent)' : 'var(--fg)', transition: 'background 0.15s, transform 0.2s', transform: menuOpen ? 'translateY(-6px) rotate(-45deg)' : 'none' }} />
+          <button type="button" className="btn nav-burger" aria-expanded={open} aria-controls="site-menu" aria-label="Toggle navigation" onClick={() => setOpen(o => !o)}>
+            {open ? <FiX size={16} /> : <FiMenu size={16} />}
           </button>
         </div>
-      </nav>
-
-      {menuOpen && (
-        <div
-          className="fixed top-12 left-0 right-0 z-40 sm:hidden"
-          style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(8px)', borderBottom: '1px solid var(--border)' }}
-        >
-          {NAV.map((item) => {
-            const active = activePath === item.path
-            return (
-              <button key={item.path}
-                onClick={() => navigate(item.path)}
-                className="mono flex items-center px-6 py-4 w-full text-left"
-                style={{
-                  color: active ? 'var(--accent)' : 'var(--fg)',
-                  fontSize: '0.75rem', fontWeight: active ? 700 : 500,
-                  letterSpacing: '0.18em', textTransform: 'uppercase',
-                  borderBottom: '1px solid var(--border)', background: 'none', border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                {active && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--accent)', marginRight: '0.75rem', flexShrink: 0, display: 'inline-block' }} />}
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </>
+      </div>
+    </header>
   )
 }

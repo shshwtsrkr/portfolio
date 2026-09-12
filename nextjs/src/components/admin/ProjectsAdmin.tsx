@@ -87,11 +87,11 @@ export default function ProjectsAdmin({ initialProjects, devMode }: { initialPro
           <h2 className="text-xl font-semibold mb-4">{editing.id ? 'Edit Project' : 'New Project'}</h2>
           <div className="grid gap-4">
             <Field label="Title" value={editing.title || ''} onChange={(v) => setEditing({ ...editing, title: v })} required />
-            <Field label="Description" value={editing.description || ''} onChange={(v) => setEditing({ ...editing, description: v })} multiline />
+            <Field label="Description (Markdown — links as [text](https://…))" value={editing.description || ''} onChange={(v) => setEditing({ ...editing, description: v })} multiline />
             <Field label="Technologies (comma-separated)" value={editing.technologies || ''} onChange={(v) => setEditing({ ...editing, technologies: v })} />
             <Field label="GitHub URL" value={editing.github_url || ''} onChange={(v) => setEditing({ ...editing, github_url: v })} />
             <Field label="Live URL" value={editing.live_url || ''} onChange={(v) => setEditing({ ...editing, live_url: v })} />
-            <ImageUpload label="Preview Image / Thumbnail" value={editing.preview_image_url || ''} onChange={(v) => setEditing({ ...editing, preview_image_url: v })} devMode={devMode} />
+            <ImageUpload label="Preview Image / Thumbnail" value={editing.preview_image_url || ''} onChange={(v) => setEditing({ ...editing, preview_image_url: v })} devMode={devMode} contextUrl={editing.github_url || ''} />
             <label className="block">
               <span className="text-xs text-gray-400 mb-1 block">Status</span>
               <select value={editing.status || ''} onChange={(e) => setEditing({ ...editing, status: e.target.value })}

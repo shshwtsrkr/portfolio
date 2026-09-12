@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import type { Profile, EmptyMessages, SectionLabels } from '@/types'
 import { parseEmptyMessages, parseSectionLabels } from '@/lib/format'
 import ImageUpload from './ImageUpload'
+import ReactMarkdown from 'react-markdown'
 
-const ACCENT = '#D97757'
+const ACCENT = '#B8741F'
 
 function parseArr<T>(v: unknown, fallback: T[]): T[] {
   if (Array.isArray(v)) return v as T[]
@@ -49,14 +50,7 @@ export default function ProfileAdmin({ initialProfile, devMode }: { initialProfi
   const [socials, setSocials] = useState<SocialRow[]>(
     parseArr<SocialRow>(initialProfile?.socials, []).map((s) => ({ platform: s.platform || 'github', url: s.url || '' }))
   )
-  const [typingTexts, setTypingTexts] = useState<string[]>(
-    parseArr<string>(initialProfile?.typing_animation_texts, [])
-  )
   const initialOneliner = parseObj<Oneliner>(initialProfile?.oneliner_config, { text: '', highlights: [] })
-  const [onelinerText, setOnelinerText] = useState(initialOneliner.text || '')
-  const [highlights, setHighlights] = useState<string[]>(
-    (initialOneliner.highlights || []).map((h) => h.word).filter(Boolean)
-  )
   const [aboutHighlights, setAboutHighlights] = useState<string[]>(
     (initialOneliner.about_highlights || []).map((h) => h.word).filter(Boolean)
   )
@@ -87,10 +81,8 @@ export default function ProfileAdmin({ initialProfile, devMode }: { initialProfi
       profile_image_url: imageUrl || null,
       resume_file_url: resumeUrl || null,
       socials: socials.filter((s) => s.url.trim()),
-      typing_animation_texts: typingTexts.filter(Boolean),
       oneliner_config: {
-        text: onelinerText,
-        highlights: highlights.filter(Boolean).map((word) => ({ word, color: ACCENT })),
+        ...initialOneliner,
         about_highlights: aboutHighlights.filter(Boolean).map((word) => ({ word, color: ACCENT })),
       },
       empty_messages: {
@@ -136,21 +128,18 @@ export default function ProfileAdmin({ initialProfile, devMode }: { initialProfi
           <div className="grid gap-4">
             <Field label="Name" value={name} onChange={setName} required />
             <Field label="Title (e.g. ML Engineer & Researcher)" value={title} onChange={setTitle} required />
-            <label className="block">
-              <span className="text-xs text-gray-400 mb-1 block">About me</span>
-              <textarea value={about} onChange={(e) => setAbout(e.target.value)} rows={4}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30" />
-            </label>
-            <span className="text-xs text-gray-400 mb-2 block">About highlights (must match text exactly)</span>
+            <MarkdownField label="About me" value={about} onChange={setAbout} rows={6}
+              hint="Markdown: blank line = new paragraph, **bold**, and links as [text](https://…). Select text and press “Link” to wrap it." />
+            <span className="text-xs text-gray-400 mb-2 block">About highlights (must match text exactly; shown in the accent colour)</span>
             <ListEditor items={aboutHighlights} setItems={setAboutHighlights} placeholder="e.g. computer vision" addLabel="+ Add about highlight" accentDot />
             {about && (
               <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
                 <span className="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">About preview</span>
-                <PreviewLine text={about} words={aboutHighlights.filter(Boolean)} />
+                <MarkdownPreview text={about} words={aboutHighlights.filter(Boolean)} />
               </div>
             )}
             <ImageUpload label="Profile Image (optional)" value={imageUrl} onChange={setImageUrl} devMode={devMode} />
-            <Field label="Resume URL (PDF link)" value={resumeUrl} onChange={setResumeUrl} />
+            <Field label="Resume URL (PDF link — Google Drive share links work)" value={resumeUrl} onChange={setResumeUrl} />
           </div>
         </div>
 
@@ -192,51 +181,24 @@ export default function ProfileAdmin({ initialProfile, devMode }: { initialProfi
           </div>
         </div>
 
-        {/* Typing animation */}
-        <div className="card-glass">
-          <h2 className="text-lg font-semibold mb-1">Typing Animation</h2>
-          <p className="text-xs text-gray-400 mb-4">Phrases that cycle under your name (the <span className="font-mono">$ ___</span> line).</p>
-          <ListEditor items={typingTexts} setItems={setTypingTexts} placeholder="e.g. Computer Vision Engineer" addLabel="+ Add phrase" />
-        </div>
-
-        {/* One-liner */}
-        <div className="card-glass">
-          <h2 className="text-lg font-semibold mb-1">Tagline</h2>
-          <p className="text-xs text-gray-400 mb-4">The sentence below the typing line. Add words/phrases to highlight in orange.</p>
-          <label className="block mb-4">
-            <span className="text-xs text-gray-400 mb-1 block">Tagline text</span>
-            <textarea value={onelinerText} onChange={(e) => setOnelinerText(e.target.value)} rows={3}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30" />
-          </label>
-          <span className="text-xs text-gray-400 mb-2 block">Highlighted words (must match text exactly)</span>
-          <ListEditor items={highlights} setItems={setHighlights} placeholder="e.g. computer vision" addLabel="+ Add highlight" accentDot />
-          {/* Live preview */}
-          {onelinerText && (
-            <div className="mt-4 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
-              <span className="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">Preview</span>
-              <PreviewLine text={onelinerText} words={highlights.filter(Boolean)} />
-            </div>
-          )}
-        </div>
-
         {/* Section labels */}
         <div className="card-glass">
-          <h2 className="text-lg font-semibold mb-1">Section Labels</h2>
-          <p className="text-xs text-gray-400 mb-4">The small <span className="font-mono">{'// label'}</span> shown above each section. The <span className="font-mono">{'//'}</span> is added automatically.</p>
+          <h2 className="text-lg font-semibold mb-1">Page Taglines</h2>
+          <p className="text-xs text-gray-400 mb-4">One sentence shown under the title of each page (publications, projects, work, writing). Leave blank to show nothing.</p>
           <div className="grid gap-4">
-            <Field label="Experience label" value={labels.experience || ''} onChange={(v) => setLabels({ ...labels, experience: v })} />
-            <Field label="Publications label" value={labels.publications || ''} onChange={(v) => setLabels({ ...labels, publications: v })} />
-            <Field label="Projects label" value={labels.projects || ''} onChange={(v) => setLabels({ ...labels, projects: v })} />
-            <Field label="Blogs label" value={labels.blogs || ''} onChange={(v) => setLabels({ ...labels, blogs: v })} />
+            <Field label="Work tagline" value={labels.experience || ''} onChange={(v) => setLabels({ ...labels, experience: v })} />
+            <Field label="Publications tagline" value={labels.publications || ''} onChange={(v) => setLabels({ ...labels, publications: v })} />
+            <Field label="Projects tagline" value={labels.projects || ''} onChange={(v) => setLabels({ ...labels, projects: v })} />
+            <Field label="Writing tagline" value={labels.blogs || ''} onChange={(v) => setLabels({ ...labels, blogs: v })} />
           </div>
         </div>
 
         {/* Empty-state messages */}
         <div className="card-glass">
           <h2 className="text-lg font-semibold mb-1">Empty Section Messages</h2>
-          <p className="text-xs text-gray-400 mb-4">Shown on a section when it has no published entries. Leave blank for the default dash.</p>
+          <p className="text-xs text-gray-400 mb-4">Shown on a page when it has no published entries.</p>
           <div className="grid gap-4">
-            <Field label="Blogs — empty message" value={emptyMsgs.blogs || ''} onChange={(v) => setEmptyMsgs({ ...emptyMsgs, blogs: v })} />
+            <Field label="Writing — empty message" value={emptyMsgs.blogs || ''} onChange={(v) => setEmptyMsgs({ ...emptyMsgs, blogs: v })} />
             <Field label="Projects — empty message" value={emptyMsgs.projects || ''} onChange={(v) => setEmptyMsgs({ ...emptyMsgs, projects: v })} />
             <Field label="Publications — empty message" value={emptyMsgs.publications || ''} onChange={(v) => setEmptyMsgs({ ...emptyMsgs, publications: v })} />
           </div>
@@ -246,7 +208,44 @@ export default function ProfileAdmin({ initialProfile, devMode }: { initialProfi
   )
 }
 
-function PreviewLine({ text, words }: { text: string; words: string[] }) {
+function MarkdownPreview({ text, words }: { text: string; words: string[] }) {
+  const hl = (children: React.ReactNode): React.ReactNode => Array.isArray(children)
+    ? children.map((c, i) => typeof c === 'string' ? <span key={i}>{hl(c)}</span> : c)
+    : typeof children === 'string' ? <PreviewLine text={children} words={words} inline /> : children
+  return (
+    <div className="text-sm text-gray-200 leading-relaxed space-y-2 [&_a]:underline [&_a]:text-blue-400">
+      <ReactMarkdown components={{ p: ({ children }) => <p>{hl(children)}</p>, li: ({ children }) => <li>{hl(children)}</li> }}>{text}</ReactMarkdown>
+    </div>
+  )
+}
+
+function MarkdownField({ label, value, onChange, rows = 4, hint }: { label: string; value: string; onChange: (v: string) => void; rows?: number; hint?: string }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  const insertLink = () => {
+    const el = ref.current
+    if (!el) return
+    const url = window.prompt('Link URL (https://…)')
+    if (!url) return
+    const { selectionStart: a, selectionEnd: b } = el
+    const selected = value.slice(a, b) || 'link text'
+    const next = `${value.slice(0, a)}[${selected}](${url})${value.slice(b)}`
+    onChange(next)
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + 1, a + 1 + selected.length) })
+  }
+  return (
+    <label className="block">
+      <span className="text-xs text-gray-400 mb-1 flex items-center justify-between">
+        <span>{label}</span>
+        <button type="button" onClick={insertLink} className="px-2 py-0.5 rounded-md text-[11px] bg-white/10 hover:bg-white/20 transition-colors">Link</button>
+      </span>
+      <textarea ref={ref} value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
+        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono focus:outline-none focus:border-white/30" />
+      {hint && <span className="text-[11px] text-gray-500 mt-1 block">{hint}</span>}
+    </label>
+  )
+}
+
+function PreviewLine({ text, words, inline }: { text: string; words: string[]; inline?: boolean }) {
   let parts: { t: string; hl: boolean }[] = [{ t: text, hl: false }]
   for (const w of words) {
     if (!w) continue
@@ -255,13 +254,10 @@ function PreviewLine({ text, words }: { text: string; words: string[] }) {
       p.hl ? [p] : p.t.split(re).filter(Boolean).map((s) => ({ t: s, hl: s.toLowerCase() === w.toLowerCase() }))
     )
   }
-  return (
-    <p className="text-sm text-gray-200 leading-relaxed">
-      {parts.map((p, i) => p.hl
-        ? <span key={i} style={{ color: ACCENT, fontWeight: 600 }}>{p.t}</span>
-        : <span key={i}>{p.t}</span>)}
-    </p>
-  )
+  const body = parts.map((p, i) => p.hl
+    ? <span key={i} style={{ color: ACCENT, fontWeight: 600 }}>{p.t}</span>
+    : <span key={i}>{p.t}</span>)
+  return inline ? <>{body}</> : <p className="text-sm text-gray-200 leading-relaxed">{body}</p>
 }
 
 function ListEditor({ items, setItems, placeholder, addLabel, accentDot }: {

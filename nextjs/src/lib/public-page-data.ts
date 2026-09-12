@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase-server'
 import {
   isSupabaseConfigured,
@@ -25,7 +26,8 @@ const MOCK_DATA: PublicPageData = {
   blogs: MOCK_BLOGS,
 }
 
-export async function getPublicPageData(): Promise<PublicPageData> {
+// cache() dedupes the query between the public layout (nav) and the page within one request.
+export const getPublicPageData = cache(async (): Promise<PublicPageData> => {
   if (!isSupabaseConfigured()) return MOCK_DATA
 
   try {
@@ -54,4 +56,4 @@ export async function getPublicPageData(): Promise<PublicPageData> {
   } catch {
     return MOCK_DATA
   }
-}
+})

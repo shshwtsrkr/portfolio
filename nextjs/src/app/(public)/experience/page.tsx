@@ -4,7 +4,7 @@ import { getPublicPageData } from '@/lib/public-page-data'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export default async function PublicationsPage() {
+export default async function ExperiencePage() {
   const data = await getPublicPageData()
-  return <SitePage section="publications" {...data} />
+  return <SitePage section="experience" {...data} />
 }
