@@ -6,11 +6,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi'
 
 // Warm the CV on hover so the viewer tab opens from cache instead of waiting on the upstream fetch.
-let resumeWarmed = false
-export const warmResume = () => {
-  if (resumeWarmed) return
-  resumeWarmed = true
-  fetch('/api/resume', { priority: 'low' } as RequestInit).catch(() => { resumeWarmed = false })
+let resumeWarmed = ''
+export const warmResume = (href: string) => {
+  if (resumeWarmed === href) return
+  resumeWarmed = href
+  fetch(href, { priority: 'low' } as RequestInit).catch(() => { resumeWarmed = '' })
 }
 
 // Survives remounts within the SPA so the pill always animates from where it last was.
@@ -24,7 +24,7 @@ export const NAV_LINKS = [
   { href: '/blogs', label: 'writing' },
 ]
 
-export default function Navigation({ hasResume, name }: { hasResume?: boolean; name: string }) {
+export default function Navigation({ resumeHref, name }: { resumeHref?: string | null; name: string }) {
   const pathname = usePathname()
   const [theme, setTheme] = useState('light')
   const [open, setOpen] = useState(false)
@@ -109,7 +109,7 @@ export default function Navigation({ hasResume, name }: { hasResume?: boolean; n
               {NAV_LINKS.map(link => (
                 <li key={link.href}><Link href={link.href} prefetch={false} aria-current={pathname === link.href ? 'page' : undefined} onPointerDown={e => moveTo(e.currentTarget, true)} onClick={e => go(e, link.href)}>{link.label}</Link></li>
               ))}
-              {hasResume && <li><a href="/api/resume" target="_blank" rel="noopener noreferrer" onPointerEnter={warmResume} onFocus={warmResume}>cv</a></li>}
+              {resumeHref && <li><a href={resumeHref} target="_blank" rel="noopener noreferrer" onPointerEnter={() => warmResume(resumeHref)} onFocus={() => warmResume(resumeHref)}>cv</a></li>}
             </ul>
           </nav>
           <button type="button" className="theme-switch" data-on={theme === 'dark'} role="switch" aria-checked={theme === 'dark'} aria-label="Dark mode" onClick={toggleTheme}>

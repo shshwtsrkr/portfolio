@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa6'
 import { SiGooglescholar } from 'react-icons/si'
 import { warmResume } from '@/components/Navigation'
+import { resumeHref } from '@/lib/format'
 import type { Profile, SocialLink } from '@/types'
 
 const DEFAULT_ABOUT = `I'm a machine learning researcher and engineer focused on computer vision, deep learning systems, and scalable MLOps infrastructure.`
@@ -59,6 +60,7 @@ function getIcon(map: Record<string, React.ElementType>, key: string): React.Ele
 /* Name, subtitle, floated portrait, bio paragraphs, and a centered social row — the classic academic "about" header. */
 export default function AboutHeader({ profile }: { profile: Partial<Profile> | null }) {
   const name = profile?.name || 'Shashwat Sarkar'
+  const cv = resumeHref(profile?.resume_file_url)
   const about = (profile?.about || DEFAULT_ABOUT).trim()
   const config = safeJson<ProfileTextConfig>(profile?.oneliner_config, {})
   const highlights = config.about_highlights || []
@@ -98,7 +100,7 @@ export default function AboutHeader({ profile }: { profile: Partial<Profile> | n
           const href = ['email', 'mail'].includes(s.platform?.toLowerCase()) && !/^(https?:|mailto:)/.test(s.url) ? `mailto:${s.url}` : s.url
           return <a key={`${s.platform}-${s.url}`} className="social-link" href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" aria-label={s.platform} title={s.platform}><Icon size={17} /></a>
         })}
-        {profile?.resume_file_url && <a className="btn" href="/api/resume" onPointerEnter={warmResume} onFocus={warmResume} download={`${name.replace(/\s+/g, '_')}_Resume.pdf`}>Download CV <FaDownload /></a>}
+        {cv && <a className="btn" href={cv} onPointerEnter={() => warmResume(cv)} onFocus={() => warmResume(cv)} download={`${name.replace(/\s+/g, '_')}_Resume.pdf`}>Download CV <FaDownload /></a>}
       </div>
     </>
   )

@@ -3,6 +3,7 @@ import CursorFollower from '@/components/CursorFollower'
 import LiquidBackground from '@/components/LiquidBackground'
 import Navigation from '@/components/Navigation'
 import { getPublicPageData } from '@/lib/public-page-data'
+import { resumeHref } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +14,7 @@ export default async function PublicLayout({ children }: { children: React.React
     <div id="top" className="w-full">
       <LiquidBackground />
       <CursorFollower />
-      <Navigation name={profile?.name || 'Shashwat Sarkar'} hasResume={!!profile?.resume_file_url} />
+      <Navigation name={profile?.name || 'Shashwat Sarkar'} resumeHref={resumeHref(profile?.resume_file_url)} />
       {children}
     </div>
   )

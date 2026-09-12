@@ -149,3 +149,12 @@ export function matches(query: string, ...fields: Array<string | number | null |
   return terms.every(t => hay.includes(t))
 }
 
+
+/** Cache-busting resume link: /api/resume is cached for an hour, so the URL carries a hash of the source link —
+ *  change the link in the admin and every browser/CDN sees a brand-new URL immediately. */
+export function resumeHref(resumeUrl?: string | null): string | null {
+  if (!resumeUrl) return null
+  let h = 5381
+  for (const ch of resumeUrl) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0
+  return `/api/resume?v=${h.toString(36)}`
+}
