@@ -220,8 +220,16 @@
 /* Theme toggle: the new theme pours out of the switch as a circular glass wipe (View Transitions API). */
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 ::view-transition-old(root) { z-index: 1; }
-::view-transition-new(root) { z-index: 2; animation: theme-pour .65s cubic-bezier(.22, 1, .36, 1) both; }
+::view-transition-new(root) { z-index: 2; animation: theme-pour .6s cubic-bezier(.4, 0, .2, 1) both; }
 @keyframes theme-pour { from { clip-path: circle(0px at var(--vt-x, 100%) var(--vt-y, 0%)); } to { clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 100%) var(--vt-y, 0%)); } }
+/* Touch devices: clip-path isn't GPU-composited on most mobile browsers, so the circle stutters and then jumps.
+   A short opacity crossfade runs entirely on the compositor and stays smooth. */
+@media (pointer: coarse) {
+  ::view-transition-new(root) { animation: theme-fade-in .32s ease-out both; clip-path: none; }
+  ::view-transition-old(root) { animation: theme-fade-out .32s ease-in both; }
+}
+@keyframes theme-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes theme-fade-out { from { opacity: 1; } to { opacity: 0; } }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 760px) {
