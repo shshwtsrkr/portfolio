@@ -1,5 +1,4 @@
 import './portfolio.css'
-import CursorFollower from '@/components/CursorFollower'
 import LiquidBackground from '@/components/LiquidBackground'
 import Navigation from '@/components/Navigation'
 import { getPublicPageData } from '@/lib/public-page-data'
@@ -13,7 +12,6 @@ export default async function PublicLayout({ children }: { children: React.React
   return (
     <div id="top" className="w-full">
       <LiquidBackground />
-      <CursorFollower />
       <Navigation name={profile?.name || 'Shashwat Sarkar'} resumeHref={resumeHref(profile?.resume_file_url)} />
       {children}
     </div>

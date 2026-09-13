@@ -52,12 +52,6 @@ export default function SitePage({ section: initialSection, profile, experiences
         {section === 'about' ? (
           <>
             <AboutHeader profile={profile} />
-            {experiences.length > 0 && (
-              <section aria-labelledby="h-experience">
-                <div className="section-head etched"><h2 id="h-experience"><Link href="/experience" onClick={e => jump(e, '/experience')}>work</Link></h2><Link className="section-link" href="/experience" onClick={e => jump(e, '/experience')}>full history <FiArrowRight aria-hidden="true" size={13} /></Link></div>
-                <ExperienceList experiences={experiences.slice(0, 4)} compact />
-              </section>
-            )}
             <section aria-labelledby="h-publications">
               <div className="section-head etched"><h2 id="h-publications"><Link href="/publications" onClick={e => jump(e, '/publications')}>selected publications</Link></h2>{publications.length > SELECTED && <Link className="section-link" href="/publications" onClick={e => jump(e, '/publications')}>all {publications.length} <FiArrowRight aria-hidden="true" size={13} /></Link>}</div>
               {publications.length ? <PublicationList publications={publications.slice(0, SELECTED)} me={name} /> : <div className="empty-note"><Md>{empty.publications || 'Nothing published here yet.'}</Md></div>}
