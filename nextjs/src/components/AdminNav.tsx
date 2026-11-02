@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useSyncExternalStore } from 'react'
 import { MdArticle, MdDarkMode, MdDashboard, MdLightMode, MdLogout, MdOpenInNew, MdOutlineArticle, MdOutlineDashboard, MdOutlinePerson, MdOutlineScience, MdOutlineVerified, MdOutlineWork, MdOutlineWorkspaces, MdPerson, MdScience, MdVerified, MdWork, MdWorkspaces } from 'react-icons/md'
 import { createClient } from '@/lib/supabase'
+import { chooseTheme } from '@/lib/theme'
 import { IconButton } from '@/components/admin/m3'
 
 // Outlined icon when idle, filled when selected (M3 navigation convention).
@@ -33,9 +34,7 @@ export default function AdminNav({ devMode }: { devMode?: boolean }) {
   useEffect(() => { NAV.forEach(item => router.prefetch(item.href)) }, [router])
 
   const toggleTheme = () => {
-    const next = dark ? 'light' : 'dark'
-    document.documentElement.setAttribute('data-theme', next)
-    try { localStorage.setItem('theme', next) } catch { /* theme still applies for this visit */ }
+    chooseTheme(dark ? 'light' : 'dark')
   }
 
   const signOut = async () => {

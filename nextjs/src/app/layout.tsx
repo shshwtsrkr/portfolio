@@ -18,25 +18,28 @@ export const metadata: Metadata = {
   description: 'Researcher in medical imaging and computer vision — multimodal learning, domain generalization, and scene text recognition.',
 }
 
-export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FAF9F5' },
-    { media: '(prefers-color-scheme: dark)', color: '#151514' },
-  ],
-}
+// Browser toolbar colour: the head script below keeps it in step with the active theme.
+export const viewport: Viewport = { themeColor: '#FAF9F5' }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={sans.variable}>
       <head>
-        {/* Set the theme before first paint: a saved choice wins, otherwise follow the OS. */}
+        {/* Set the theme before first paint: a saved choice wins, otherwise follow the device, live (see
+            lib/theme.ts for the toggle side). Also keeps the browser toolbar colour matched to the theme. */}
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
-            try {
-              var t = localStorage.getItem('theme');
-              if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-              document.documentElement.setAttribute('data-theme', t);
-            } catch(e){ document.documentElement.setAttribute('data-theme', 'light'); }
+            var root = document.documentElement, mq = matchMedia('(prefers-color-scheme: dark)');
+            function saved(){ try { var t = localStorage.getItem('theme'); return t === 'light' || t === 'dark' ? t : null; } catch(e){ return null; } }
+            function apply(){ root.setAttribute('data-theme', saved() || (mq.matches ? 'dark' : 'light')); }
+            function sync(){
+              var m = document.querySelector('meta[name="theme-color"]');
+              if (m) m.setAttribute('content', root.getAttribute('data-theme') === 'dark' ? '#151514' : '#FAF9F5');
+            }
+            apply();
+            mq.addEventListener('change', function(){ if (!saved()) apply(); });
+            document.addEventListener('DOMContentLoaded', sync);
+            new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
           })();
         `}} />
       </head>

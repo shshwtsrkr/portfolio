@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { chooseTheme } from '@/lib/theme'
 import type { IconType } from 'react-icons'
 import {
   MdArticle, MdDarkMode, MdDescription, MdEditNote, MdLightMode, MdOutlineArticle, MdOutlineDescription,
@@ -85,9 +86,8 @@ export default function Navigation({ resumeHref, name, showWriting }: { resumeHr
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light'
     const apply = () => {
-      document.documentElement.setAttribute('data-theme', next)
+      chooseTheme(next)
       setTheme(next)
-      try { localStorage.setItem('theme', next) } catch { /* Theme still works without storage. */ }
     }
     const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
     if (!doc.startViewTransition) return apply()
