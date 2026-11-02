@@ -158,3 +158,30 @@ export function resumeHref(resumeUrl?: string | null): string | null {
   for (const ch of resumeUrl) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0
   return `/api/resume?v=${h.toString(36)}`
 }
+
+/** Accepted/published papers need no status label — only in-progress states (preprint, under review…) are shown. */
+export function isFinalStatus(status?: string | null): boolean {
+  return !status || /^(accepted|published|in press)$/i.test(status.trim())
+}
+
+const JOURNALS = new Set(['EAAI', 'SNCS', 'TPAMI', 'TIP', 'TMI'])
+
+/** A BibTeX entry built from the stored fields: journals become @article, everything else @inproceedings.
+ *  Key follows the common "lastnameYEARfirstword" convention. */
+export function bibtex(pub: { title: string; authors?: string; venue?: string; publication_year?: number; doi?: string; pdf_url?: string }): string {
+  const authors = (pub.authors || '').split(/\s*,\s*|\s+and\s+/).map(a => a.trim()).filter(Boolean)
+  const last = (authors[0] || 'anon').split(/\s+/).pop()!.toLowerCase().replace(/[^a-z]/g, '')
+  const word = (pub.title.toLowerCase().match(/[a-z]{4,}/) || ['paper'])[0]
+  const abbr = venueAbbr(pub.venue)
+  const journal = JOURNALS.has(abbr) || /journal|transactions|letters/i.test(pub.venue || '')
+  const fields: Array<[string, string | number | undefined]> = [
+    ['title', `{${pub.title}}`],
+    ['author', authors.join(' and ')],
+    [journal ? 'journal' : 'booktitle', pub.venue ? venueName(pub.venue) : undefined],
+    ['year', pub.publication_year],
+    ['doi', pub.doi],
+    ['url', pub.doi ? undefined : pub.pdf_url],
+  ]
+  const body = fields.filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => `  ${k} = {${v}}`).join(',\n')
+  return `@${journal ? 'article' : 'inproceedings'}{${last}${pub.publication_year ?? ''}${word},\n${body}\n}`
+}

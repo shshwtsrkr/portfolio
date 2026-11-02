@@ -1,8 +1,8 @@
 import SitePage from '@/components/SitePage'
 import { getPublicPageData } from '@/lib/public-page-data'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Static, refreshed at most once a minute after admin edits.
+export const revalidate = 60
 
 export default async function BlogsPage() {
   const data = await getPublicPageData()

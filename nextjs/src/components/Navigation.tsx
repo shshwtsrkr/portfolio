@@ -2,8 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { FiMenu, FiMoon, FiSun, FiX } from 'react-icons/fi'
+import { useEffect, useState } from 'react'
+import type { IconType } from 'react-icons'
+import {
+  MdArticle, MdDarkMode, MdDescription, MdEditNote, MdLightMode, MdOutlineArticle, MdOutlineDescription,
+  MdOutlineEditNote, MdOutlinePerson, MdOutlineScience, MdOutlineWorkOutline, MdPerson, MdScience, MdWork,
+} from 'react-icons/md'
 
 // Warm the CV on hover so the viewer tab opens from cache instead of waiting on the upstream fetch.
 let resumeWarmed = ''
@@ -13,112 +17,113 @@ export const warmResume = (href: string) => {
   fetch(href, { priority: 'low' } as RequestInit).catch(() => { resumeWarmed = '' })
 }
 
-// Survives remounts within the SPA so the pill always animates from where it last was.
-let rememberedPill: { left: number; right: number } | null = null
-
-export const NAV_LINKS = [
-  { href: '/', label: 'about' },
-  { href: '/publications', label: 'publications' },
-  { href: '/projects', label: 'projects' },
-  { href: '/experience', label: 'work' },
-  { href: '/blogs', label: 'writing' },
+// Material Symbols-style pairs: outlined when idle, filled when active (the M3 navigation bar convention).
+export const NAV_LINKS: Array<{ href: string; label: string; short: string; icon: IconType; active: IconType }> = [
+  { href: '/', label: 'About', short: 'About', icon: MdOutlinePerson, active: MdPerson },
+  { href: '/publications', label: 'Publications', short: 'Papers', icon: MdOutlineArticle, active: MdArticle },
+  { href: '/projects', label: 'Projects', short: 'Projects', icon: MdOutlineScience, active: MdScience },
+  { href: '/experience', label: 'Experience', short: 'Work', icon: MdOutlineWorkOutline, active: MdWork },
+  { href: '/blogs', label: 'Writing', short: 'Writing', icon: MdOutlineEditNote, active: MdEditNote },
 ]
 
-export default function Navigation({ resumeHref, name }: { resumeHref?: string | null; name: string }) {
+/* Sections switch on the client: every route already carries the full dataset, so a click only pushes
+   the URL (the App Router syncs usePathname) and SitePage re-renders. Modified clicks keep browser defaults. */
+export function navigate(e: React.MouseEvent<HTMLAnchorElement>, href: string, pathname: string) {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+  e.preventDefault()
+  if (href === pathname) return
+  window.history.pushState(null, '', href)
+  window.scrollTo({ top: 0 })
+}
+
+/* Google-style icon motion: the icon of the tab you pick plays a short animation of its own (see .nav-item[data-play]
+   in portfolio.css). Only on a click, never on page load, and the attribute clears itself when the animation ends. */
+function playIcon(el: HTMLElement) {
+  el.removeAttribute('data-play')
+  void el.offsetWidth
+  el.setAttribute('data-play', '')
+  // Listen on the link, not the svg: selecting swaps the outlined icon for the filled one mid-animation.
+  el.addEventListener('animationend', () => el.removeAttribute('data-play'), { once: true })
+}
+
+export default function Navigation({ resumeHref, name, showWriting }: { resumeHref?: string | null; name: string; showWriting: boolean }) {
   const pathname = usePathname()
-  const [theme, setTheme] = useState('light')
-  const [open, setOpen] = useState(false)
-  const listRef = useRef<HTMLUListElement>(null)
-  const [indicator, setIndicator] = useState<{ left: number; right: number; dir?: 'left' | 'right' } | null>(null)
-
-  // Sections switch instantly on the client: push the URL (the App Router syncs usePathname) and
-  // let SitePage re-render from data it already has. Modified clicks keep default browser behaviour.
-  const go = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
-    e.preventDefault()
-    setOpen(false)
-    if (href !== pathname) { window.history.pushState(null, '', href); window.scrollTo({ top: 0 }) }
-  }
-
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [scrolled, setScrolled] = useState(false)
+  // M3 top app bar: flat at rest, tonal "on scroll" container once content passes under it.
   useEffect(() => {
-    const syncTheme = () => setTheme(document.documentElement.getAttribute('data-theme') || 'light')
-    syncTheme()
-    const observer = new MutationObserver(syncTheme)
+    const onScroll = () => setScrolled(window.scrollY > 4)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  /* M3 "large title collapses into the bar": on the home page the big hero name is the title, so the
+     bar shows no name until that heading has scrolled up under it; then the name slides into the bar.
+     Every other page has no hero name, so the bar always shows it there. */
+  const [heroGone, setHeroGone] = useState(false)
+  const nameIn = pathname !== '/' || heroGone
+  useEffect(() => {
+    if (pathname !== '/') return
+    let io: IntersectionObserver | undefined
+    const raf = requestAnimationFrame(() => {
+      const hero = document.querySelector('.hero-name')
+      if (!hero) return setHeroGone(true)
+      io = new IntersectionObserver(([e]) => setHeroGone(!e.isIntersecting), { rootMargin: '-64px 0px 0px 0px' })
+      io.observe(hero)
+    })
+    return () => { cancelAnimationFrame(raf); io?.disconnect() }
+  }, [pathname])
+  const links = NAV_LINKS.filter(l => showWriting || l.href !== '/blogs')
+  useEffect(() => {
+    const sync = () => setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light')
+    sync()
+    const observer = new MutationObserver(sync)
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
   }, [])
 
-  // The pill is positioned by its left/right insets; CSS gives the leading edge a faster
-  // transition than the trailing one, so it stretches toward the new link and settles.
-  const lastRef = useRef<{ left: number; right: number } | null>(null)
-  const rafRef = useRef(0)
-  // Move the pill onto `target`. Called optimistically on pointer-down (before the route loads)
-  // and again once the pathname settles, which is a no-op if the pill is already there.
-  const moveTo = (target: HTMLElement | null, animate: boolean) => {
-    if (!target || !listRef.current) { lastRef.current = null; return setIndicator(null) }
-    const list = listRef.current.getBoundingClientRect()
-    const rect = target.getBoundingClientRect()
-    const next = { left: rect.left - list.left, right: list.right - rect.right }
-    const mounted = lastRef.current !== null
-    const last = lastRef.current ?? rememberedPill
-    if (last && Math.abs(last.left - next.left) < 1 && Math.abs(last.right - next.right) < 1 && mounted) return
-    lastRef.current = next
-    rememberedPill = next
-    if (!animate || !last || Math.abs(last.left - next.left) < 1) return setIndicator(next)
-    const dir = next.left > last.left ? 'right' : 'left'
-    if (mounted) return setIndicator({ ...next, dir })
-    // Fresh mount: paint at the previous position first, then let the transition carry it over.
-    setIndicator(last)
-    rafRef.current = requestAnimationFrame(() => { rafRef.current = requestAnimationFrame(() => setIndicator({ ...next, dir })) })
-  }
-  useLayoutEffect(() => {
-    moveTo(listRef.current?.querySelector<HTMLAnchorElement>('a[aria-current="page"]') ?? null, true)
-    const onResize = () => moveTo(listRef.current?.querySelector<HTMLAnchorElement>('a[aria-current="page"]') ?? null, false)
-    window.addEventListener('resize', onResize)
-    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(rafRef.current) }
-  }, [pathname])
-
-  const toggleTheme = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light'
     const apply = () => {
       document.documentElement.setAttribute('data-theme', next)
+      setTheme(next)
       try { localStorage.setItem('theme', next) } catch { /* Theme still works without storage. */ }
     }
-    const root = document.documentElement
     const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
     if (!doc.startViewTransition) return apply()
-    // Circular wipe centred on the switch, large enough to reach the farthest viewport corner.
-    const r = e.currentTarget.getBoundingClientRect()
-    const x = r.left + r.width / 2, y = r.top + r.height / 2
-    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
-    root.style.setProperty('--vt-x', `${x}px`)
-    root.style.setProperty('--vt-y', `${y}px`)
-    root.style.setProperty('--vt-r', `${radius}px`)
     doc.startViewTransition(apply)
   }
 
   return (
-    <header className="site-nav glass" data-open={open}>
+    <header className="site-nav" data-scrolled={scrolled}>
       <a className="skip-link" href="#main">Skip to content</a>
       <div className="nav-inner">
-        <Link href="/" className="brand" aria-label={`${name} — home`}>ss<span>.</span></Link>
-        <div className="nav-right">
-          <nav aria-label="Site">
-            <ul className="nav-links" ref={listRef} id="site-menu">
-              {indicator && <li aria-hidden="true" className="nav-indicator" data-dir={indicator.dir} style={{ left: indicator.left, right: indicator.right }} />}
-              {NAV_LINKS.map(link => (
-                <li key={link.href}><Link href={link.href} prefetch={false} aria-current={pathname === link.href ? 'page' : undefined} onPointerDown={e => moveTo(e.currentTarget, true)} onClick={e => go(e, link.href)}>{link.label}</Link></li>
-              ))}
-              {resumeHref && <li><a href={resumeHref} target="_blank" rel="noopener noreferrer" onPointerEnter={() => warmResume(resumeHref)} onFocus={() => warmResume(resumeHref)}>cv</a></li>}
-            </ul>
-          </nav>
-          <button type="button" className="theme-switch" data-on={theme === 'dark'} role="switch" aria-checked={theme === 'dark'} aria-label="Dark mode" onClick={toggleTheme}>
-            <span className="knob">{theme === 'dark' ? <FiMoon size={11} /> : <FiSun size={11} />}</span>
-          </button>
-          <button type="button" className="btn nav-burger" aria-expanded={open} aria-controls="site-menu" aria-label="Toggle navigation" onClick={() => setOpen(o => !o)}>
-            {open ? <FiX size={16} /> : <FiMenu size={16} />}
-          </button>
-        </div>
+        <Link href="/" className="wordmark" data-show={nameIn} aria-hidden={!nameIn} tabIndex={nameIn ? undefined : -1} onClick={e => navigate(e, '/', pathname)}><span>{name}</span></Link>
+        <nav aria-label="Site" className="nav-links">
+          {links.map(link => {
+            const on = pathname === link.href
+            const Icon = on ? link.active : link.icon
+            return (
+              <Link key={link.href} href={link.href} prefetch={false} className="nav-item ripple" data-icon={link.short.toLowerCase()} aria-current={on ? 'page' : undefined} onClick={e => { if (!on) playIcon(e.currentTarget); navigate(e, link.href, pathname) }}>
+                <span className="nav-pill" aria-hidden="true"><Icon size={24} /></span>
+                <span className="nav-label"><span className="full">{link.label}</span><span className="short" aria-hidden="true">{link.short}</span></span>
+              </Link>
+            )
+          })}
+          {resumeHref && (
+            <a href={resumeHref} target="_blank" rel="noopener noreferrer" className="nav-item ripple" data-icon="cv" onClick={e => playIcon(e.currentTarget)} onPointerEnter={() => warmResume(resumeHref)} onFocus={() => warmResume(resumeHref)}>
+              <span className="nav-pill" aria-hidden="true"><MdOutlineDescription size={24} className="idle" /><MdDescription size={24} className="hot" /></span>
+              <span className="nav-label">CV</span>
+            </a>
+          )}
+        </nav>
+        {/* M3 switch with icons: the handle grows when selected and squeezes wider while pressed. */}
+        <button type="button" className="md-switch" role="switch" aria-checked={theme === 'dark'} data-on={theme === 'dark'} onClick={toggleTheme} aria-label="Dark theme" title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
+          <span className="md-switch-handle" aria-hidden="true">
+            <MdLightMode className="icon-sun" size={16} />
+            <MdDarkMode className="icon-moon" size={16} />
+          </span>
+        </button>
       </div>
     </header>
   )

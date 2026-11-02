@@ -1,55 +1,65 @@
+import Link from 'next/link'
+import { MdOpenInNew, MdOutlineArticle, MdOutlinePerson, MdOutlineScience, MdOutlineVerified, MdOutlineWork, MdOutlineWorkspaces } from 'react-icons/md'
 import { createClient } from '@/lib/supabase-server'
 import { isSupabaseConfigured } from '@/lib/dev-data'
-import Link from 'next/link'
+
+const SECTIONS = [
+  { table: 'publications', label: 'Publications', href: '/admin/publications', icon: MdOutlineScience },
+  { table: 'projects', label: 'Projects', href: '/admin/projects', icon: MdOutlineWorkspaces },
+  { table: 'experience', label: 'Experience', href: '/admin/experience', icon: MdOutlineWork },
+  { table: 'certifications', label: 'Certifications', href: '/admin/certifications', icon: MdOutlineVerified },
+  { table: 'blogs', label: 'Writing', href: '/admin/blogs', icon: MdOutlineArticle },
+] as const
 
 export default async function AdminDashboard() {
-  let blogCount = 0, projectCount = 0, pubCount = 0
-
-  if (isSupabaseConfigured()) {
+  // Total and live (published) counts per section; a missing table just reads as zero.
+  const counts = await Promise.all(SECTIONS.map(async s => {
+    if (!isSupabaseConfigured()) return { total: 0, live: 0 }
     const supabase = await createClient()
-    const [b, p, pub] = await Promise.all([
-      supabase.from('blogs').select('*', { count: 'exact', head: true }),
-      supabase.from('projects').select('*', { count: 'exact', head: true }),
-      supabase.from('publications').select('*', { count: 'exact', head: true }),
+    const [all, live] = await Promise.all([
+      supabase.from(s.table).select('*', { count: 'exact', head: true }),
+      supabase.from(s.table).select('*', { count: 'exact', head: true }).eq('is_published', true),
     ])
-    blogCount = b.count ?? 0
-    projectCount = p.count ?? 0
-    pubCount = pub.count ?? 0
-  }
-
-  const stats = [
-    { label: 'Blogs', count: blogCount, href: '/admin/blogs', accent: '#A855F7' },
-    { label: 'Projects', count: projectCount, href: '/admin/projects', accent: '#0EA5E9' },
-    { label: 'Publications', count: pubCount, href: '/admin/publications', accent: '#22C55E' },
-  ]
+    return { total: all.count ?? 0, live: live.count ?? 0 }
+  }))
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
-        {stats.map((s) => (
-          <Link key={s.label} href={s.href}
-            className="card-glass group block min-h-32 transition-transform hover:-translate-y-0.5">
-            <div className="flex h-full flex-col justify-between gap-6">
-              <div className="h-1.5 w-12 rounded-full" style={{ backgroundColor: s.accent }} />
-              <div>
-                <p className="text-5xl font-bold leading-none text-white">{s.count}</p>
-                <p className="mt-2 text-sm font-medium uppercase tracking-[0.18em] text-gray-400">{s.label}</p>
-              </div>
-            </div>
-          </Link>
-        ))}
+    <>
+      <header className="a-head">
+        <div>
+          <h1>Welcome back</h1>
+          <p>Changes you save here show on the site within a minute.</p>
+        </div>
+      </header>
+
+      <div className="a-stats">
+        {SECTIONS.map((s, i) => {
+          const Icon = s.icon
+          const { total, live } = counts[i]
+          return (
+            <Link key={s.table} href={s.href} className="a-stat ripple">
+              <span className="a-stat-icon"><Icon size={22} aria-hidden="true" /></span>
+              <span>
+                <span className="a-stat-num">{total}</span>
+                <span className="a-stat-label" style={{ display: 'block' }}>{s.label}</span>
+                <span className="a-stat-sub">{total === live ? 'All live' : `${live} live · ${total - live} hidden`}</span>
+              </span>
+            </Link>
+          )
+        })}
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Link href="/admin/profile" className="card-glass hover:border-white/20 transition-colors">
-          <h2 className="text-lg font-semibold mb-1">Edit Profile</h2>
-          <p className="text-gray-400 text-sm">Update your name, bio, social links, and tech stack</p>
+
+      <h2 className="a-section-title">Shortcuts</h2>
+      <div className="a-actions-grid">
+        <Link href="/admin/profile" className="a-action ripple">
+          <MdOutlinePerson size={24} aria-hidden="true" />
+          <span><strong>Edit profile</strong><span>Name, about, photo, social links, résumé</span></span>
         </Link>
-        <Link href="/" target="_blank" className="card-glass hover:border-white/20 transition-colors">
-          <h2 className="text-lg font-semibold mb-1">View Site →</h2>
-          <p className="text-gray-400 text-sm">Open the public portfolio in a new tab</p>
-        </Link>
+        <a href="/" target="_blank" rel="noopener noreferrer" className="a-action ripple">
+          <MdOpenInNew size={24} aria-hidden="true" />
+          <span><strong>View site</strong><span>Open the public portfolio in a new tab</span></span>
+        </a>
       </div>
-    </div>
+    </>
   )
 }

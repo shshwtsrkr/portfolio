@@ -1,184 +1,92 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { MdAdd, MdDeleteOutline, MdEdit, MdOutlineScience, MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import type { Publication } from '@/types'
+import { venueAbbr } from '@/lib/format'
 import ImageUpload from './ImageUpload'
+import { Button, Empty, IconButton, MONTHS, PageHeader, Select, Sheet, StatusChip, Switch, TextField, useCrud } from './m3'
 
-const STATUS_OPTIONS = ['Under Preparation', 'Submitted', 'Under Review', 'Accepted']
+const STATUS_OPTIONS = ['Under Preparation', 'Submitted', 'Under Review', 'Accepted', 'Published']
 const EMPTY: Partial<Publication> = {
   title: '', authors: '', venue: '', publication_year: new Date().getFullYear(),
   abstract_text: '', doi: '', pdf_url: '', code_url: '', thumbnail_url: '',
   show_citations: false, citation_count: 0, display_order: 0, is_published: false,
   show_pdf_button: true, show_code_button: false, show_doi_button: true,
 }
+const byOrder = (a: Publication, b: Publication) => (a.display_order || 0) - (b.display_order || 0) || (b.publication_year || 0) - (a.publication_year || 0)
 
 export default function PublicationsAdmin({ initialPublications, devMode }: { initialPublications: Publication[]; devMode?: boolean }) {
-  const [publications, setPublications] = useState(initialPublications)
-  const [editing, setEditing] = useState<Partial<Publication> | null>(null)
-  const [saving, setSaving] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
-
-  const sortPublications = (items: Publication[]) =>
-    [...items].sort((a, b) => (a.display_order || 0) - (b.display_order || 0) || (b.publication_year || 0) - (a.publication_year || 0))
-
-  const upsertLocal = (publication: Publication) => {
-    setPublications((items) => {
-      const exists = items.some((item) => item.id === publication.id)
-      const next = exists
-        ? items.map((item) => item.id === publication.id ? publication : item)
-        : [publication, ...items]
-      return sortPublications(next)
-    })
-  }
-
-  const save = async () => {
-    if (!editing) return
-    if (devMode) { alert('Dev mode: saves are disabled. Connect Supabase to persist changes.'); return }
-    setSaving(true)
-    let saved: Publication | null = null
-    let error
-    if (editing.id) {
-      const { id, ...data } = editing as Publication
-      delete data.created_at
-      delete data.updated_at
-      const result = await supabase.from('publications').update(data).eq('id', id).select().single()
-      saved = result.data
-      error = result.error
-    } else {
-      const result = await supabase.from('publications').insert(editing).select().single()
-      saved = result.data
-      error = result.error
-    }
-    setSaving(false)
-    if (error) {
-      alert(`Save failed: ${error.message}`)
-      return
-    }
-    if (saved) upsertLocal(saved)
-    setEditing(null)
-    router.refresh()
-  }
-
-  const del = async (id: number) => {
-    if (!confirm('Delete this publication?')) return
-    await supabase.from('publications').delete().eq('id', id)
-    setPublications((p) => p.filter((x) => x.id !== id))
-  }
-
-  const toggle = async (pub: Publication) => {
-    await supabase.from('publications').update({ is_published: !pub.is_published }).eq('id', pub.id)
-    setPublications((p) => p.map((x) => x.id === pub.id ? { ...x, is_published: !x.is_published } : x))
-  }
+  const { items, editing, setEditing, saving, save, remove, togglePublished, dialog } = useCrud('publications', initialPublications, byOrder, devMode, 'Paper')
+  const set = (patch: Partial<Publication>) => setEditing({ ...editing, ...patch })
+  // The month column is optional (supabase/add_publication_month.sql). Without it, the site finds the month from the DOI.
+  const hasMonthColumn = initialPublications.some(p => 'publication_month' in p)
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Publications</h1>
-        <button onClick={() => setEditing({ ...EMPTY })}
-          className="px-4 py-2 bg-white text-black rounded-full font-medium hover:bg-gray-100 transition-colors">
-          + New Publication
-        </button>
-      </div>
+    <>
+      <PageHeader title="Publications" subtitle="Papers on the Publications page, the research map and Recently.">
+        <Button icon={<MdAdd size={20} />} onClick={() => setEditing({ ...EMPTY })}>New paper</Button>
+      </PageHeader>
 
-      {editing && (
-        <div className="card-glass mb-6">
-          <h2 className="text-xl font-semibold mb-4">{editing.id ? 'Edit Publication' : 'New Publication'}</h2>
-          <div className="grid gap-4">
-            <Field label="Title" value={editing.title || ''} onChange={(v) => setEditing({ ...editing, title: v })} required />
-            <Field label="Authors" value={editing.authors || ''} onChange={(v) => setEditing({ ...editing, authors: v })} />
-            <div className="flex gap-4">
-              <Field label="Venue / Conference / Journal" value={editing.venue || ''} onChange={(v) => setEditing({ ...editing, venue: v })} />
-              <Field label="Year" value={String(editing.publication_year || '')} onChange={(v) => setEditing({ ...editing, publication_year: Number(v) })} type="number" />
-            </div>
-            <Field label="Abstract (Markdown — links as [text](https://…))" value={editing.abstract_text || ''} onChange={(v) => setEditing({ ...editing, abstract_text: v })} multiline />
-            <ImageUpload label="Thumbnail" value={editing.thumbnail_url || ''} onChange={(v) => setEditing({ ...editing, thumbnail_url: v })} devMode={devMode} contextUrl={editing.code_url || ''} />
-            <div className="flex gap-4">
-              <Field label="DOI" value={editing.doi || ''} onChange={(v) => setEditing({ ...editing, doi: v })} />
-              <Field label="PDF URL" value={editing.pdf_url || ''} onChange={(v) => setEditing({ ...editing, pdf_url: v })} />
-              <Field label="Code URL" value={editing.code_url || ''} onChange={(v) => setEditing({ ...editing, code_url: v })} />
-            </div>
-            <label className="block">
-              <span className="text-xs text-gray-400 mb-1 block">Status</span>
-              <select value={editing.status || ''} onChange={(e) => setEditing({ ...editing, status: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30">
-                <option value="">-- Select Status --</option>
-                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </label>
-            <div className="flex gap-4">
-              <Field label="Citations" value={String(editing.citation_count || 0)} onChange={(v) => setEditing({ ...editing, citation_count: Number(v) })} type="number" />
-              <Field label="Display Order" value={String(editing.display_order || 0)} onChange={(v) => setEditing({ ...editing, display_order: Number(v) })} type="number" />
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <CheckField label="Published" checked={!!editing.is_published} onChange={(v) => setEditing({ ...editing, is_published: v })} />
-              <CheckField label="Show Citations" checked={!!editing.show_citations} onChange={(v) => setEditing({ ...editing, show_citations: v })} />
-              <CheckField label="Show PDF Button" checked={!!editing.show_pdf_button} onChange={(v) => setEditing({ ...editing, show_pdf_button: v })} />
-              <CheckField label="Show Code Button" checked={!!editing.show_code_button} onChange={(v) => setEditing({ ...editing, show_code_button: v })} />
-              <CheckField label="Show DOI Button" checked={!!editing.show_doi_button} onChange={(v) => setEditing({ ...editing, show_doi_button: v })} />
-            </div>
-          </div>
-          <div className="flex gap-3 mt-4">
-            <button onClick={save} disabled={saving}
-              className="px-4 py-2 bg-white text-black rounded-full font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors">
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button onClick={() => setEditing(null)} className="px-4 py-2 bg-white/10 rounded-full font-medium hover:bg-white/20 transition-colors">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {publications.map((pub) => (
-          <div key={pub.id} className="card-glass flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`w-2 h-2 rounded-full shrink-0 ${pub.is_published ? 'bg-green-400' : 'bg-gray-600'}`} />
-                <h3 className="font-semibold text-white truncate">{pub.title}</h3>
+      {items.length ? (
+        <ul className="a-list">
+          {items.map(pub => (
+            <li key={pub.id} className="a-list-item">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <span className="a-list-lead">{pub.thumbnail_url ? <img src={pub.thumbnail_url} alt="" /> : <MdOutlineScience size={24} />}</span>
+              <div className="a-list-body">
+                <div className="a-list-title">{pub.title}</div>
+                <div className="a-list-meta">
+                  <span>{[pub.venue && venueAbbr(pub.venue), pub.publication_year, pub.status].filter(Boolean).join(' · ')}</span>
+                  <StatusChip published={pub.is_published} />
+                </div>
               </div>
-              <p className="text-sm text-gray-400">
-                {pub.venue && `${pub.venue} `}{pub.publication_year && `(${pub.publication_year})`}
-                {pub.status && ` · ${pub.status}`}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => toggle(pub)} className="px-3 py-1 rounded-full text-xs bg-white/10 hover:bg-white/20 transition-colors">
-                {pub.is_published ? 'Unpublish' : 'Publish'}
-              </button>
-              <button onClick={() => setEditing({ ...pub })} className="px-3 py-1 rounded-full text-xs bg-white/10 hover:bg-white/20 transition-colors">Edit</button>
-              <button onClick={() => del(pub.id)} className="px-3 py-1 rounded-full text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 transition-colors">Delete</button>
-            </div>
+              <div className="a-list-actions">
+                <IconButton label={pub.is_published ? 'Hide from site' : 'Show on site'} onClick={() => togglePublished(pub)}>{pub.is_published ? <MdVisibilityOff size={20} /> : <MdVisibility size={20} />}</IconButton>
+                <IconButton label="Edit" onClick={() => setEditing({ ...pub })}><MdEdit size={20} /></IconButton>
+                <IconButton label="Delete" danger onClick={() => remove(pub, pub.title)}><MdDeleteOutline size={20} /></IconButton>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : <Empty icon={<MdOutlineScience size={40} />}>No papers yet.</Empty>}
+
+      <Sheet open={!!editing} title={editing?.id ? 'Edit paper' : 'New paper'} onClose={() => setEditing(null)} onSave={() => save()} saving={saving}>
+        {editing && <>
+          <TextField label="Title" value={editing.title} onChange={v => set({ title: v })} required />
+          <TextField label="Authors" value={editing.authors} onChange={v => set({ authors: v })} support="Comma-separated; your name is bolded automatically" />
+          <TextField label="Venue" value={editing.venue} onChange={v => set({ venue: v })} support="Conference or journal, e.g. ICPR 2024" />
+          <div className="a-row">
+            <TextField label="Year" type="number" value={editing.publication_year} onChange={v => set({ publication_year: Number(v) })} />
+            {hasMonthColumn && (
+              <Select label="Month" value={editing.publication_month ?? ''} onChange={v => set({ publication_month: v ? Number(v) : null })}
+                options={[{ value: '', label: 'From DOI' }, ...MONTHS.map((m, i) => ({ value: i + 1, label: m }))]} />
+            )}
+            <Select label="Status" value={editing.status ?? ''} onChange={v => set({ status: v })}
+              options={[{ value: '', label: '—' }, ...STATUS_OPTIONS.map(s => ({ value: s, label: s }))]} />
           </div>
-        ))}
-        {publications.length === 0 && <p className="text-center text-gray-500 py-10">No publications yet.</p>}
-      </div>
-    </div>
-  )
-}
+          <TextField label="Abstract" value={editing.abstract_text} onChange={v => set({ abstract_text: v })} multiline rows={6} support="Markdown; links as [text](https://…)" />
+          <ImageUpload label="Figure / thumbnail" value={editing.thumbnail_url || ''} onChange={v => set({ thumbnail_url: v })} devMode={devMode} contextUrl={editing.code_url || ''} />
 
-function Field({ label, value, onChange, type = 'text', multiline = false, required = false }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; multiline?: boolean; required?: boolean
-}) {
-  const cls = 'w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30'
-  return (
-    <label className="block flex-1">
-      <span className="text-xs text-gray-400 mb-1 block">{label}{required && ' *'}</span>
-      {multiline
-        ? <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={cls} />
-        : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={cls} />}
-    </label>
-  )
-}
+          <p className="a-sheet-section">Links</p>
+          <TextField label="DOI" value={editing.doi} onChange={v => set({ doi: v })} support="e.g. 10.1007/978-3-031-78447-7_15 — also used to find the publication month" />
+          <TextField label="Paper / PDF URL" type="url" value={editing.pdf_url} onChange={v => set({ pdf_url: v })} />
+          <TextField label="Code URL" type="url" value={editing.code_url} onChange={v => set({ code_url: v })} />
 
-function CheckField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <label className="flex items-center gap-2 text-sm cursor-pointer">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4" />
-      {label}
-    </label>
+          <p className="a-sheet-section">Display</p>
+          <div className="a-row">
+            <TextField label="Citations" type="number" value={editing.citation_count ?? 0} onChange={v => set({ citation_count: Number(v) })} />
+            <TextField label="Display order" type="number" value={editing.display_order ?? 0} onChange={v => set({ display_order: Number(v) })} />
+          </div>
+          <div className="a-switches">
+            <Switch label="Show on site" checked={!!editing.is_published} onChange={v => set({ is_published: v })} />
+            <Switch label="Show citations" checked={!!editing.show_citations} onChange={v => set({ show_citations: v })} />
+            <Switch label="Paper button" checked={!!editing.show_pdf_button} onChange={v => set({ show_pdf_button: v })} />
+            <Switch label="Code button" checked={!!editing.show_code_button} onChange={v => set({ show_code_button: v })} />
+            <Switch label="DOI button" checked={!!editing.show_doi_button} onChange={v => set({ show_doi_button: v })} />
+          </div>
+        </>}
+      </Sheet>
+      {dialog}
+    </>
   )
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { markAuthor, matches, venueAbbr, venueName } from './format'
+import { bibtex, isFinalStatus, markAuthor, matches, venueAbbr, venueName } from './format'
 
 describe('venueAbbr', () => {
   it('drops the year from short venue codes', () => {
@@ -56,5 +56,27 @@ describe('matches', () => {
   it('ignores diacritics and blank queries', () => {
     expect(matches('recogniser', 'Recogníser')).toBe(true)
     expect(matches('   ', 'anything')).toBe(true)
+  })
+})
+
+describe('bibtex', () => {
+  it('builds a journal article with a lastnameYEARword key', () => {
+    const out = bibtex({ title: 'Multimodal Exponential Moving Average', authors: 'Ashis Datta, Shashwat Sarkar', venue: 'EAAI', publication_year: 2026 })
+    expect(out.startsWith('@article{datta2026multimodal,')).toBe(true)
+    expect(out).toContain('author = {Ashis Datta and Shashwat Sarkar}')
+    expect(out).toContain('journal = {Engineering Applications of Artificial Intelligence}')
+  })
+  it('uses inproceedings for conferences', () => {
+    const out = bibtex({ title: 'DATR: Domain Agnostic Text Recognizer', authors: 'Kunal Purkayastha', venue: 'ICPR', publication_year: 2024 })
+    expect(out.startsWith('@inproceedings{purkayastha2024datr,')).toBe(true)
+    expect(out).toContain('booktitle = {International Conference on Pattern Recognition}')
+  })
+})
+
+describe('isFinalStatus', () => {
+  it('hides accepted and published, keeps in-progress states', () => {
+    expect(isFinalStatus('Accepted')).toBe(true)
+    expect(isFinalStatus('published')).toBe(true)
+    expect(isFinalStatus('Under Review')).toBe(false)
   })
 })

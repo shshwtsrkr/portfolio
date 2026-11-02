@@ -1,131 +1,139 @@
 @import "tailwindcss";
 
-/* Light: true neutrals. Dark: cool slate-charcoal (not black) so the warm amber accent reads editorial, not neon. */
-:root {
-  --bg: #15171C;
-  --surface: #21242B;
-  --fg: #E9EAEE;
-  --link: #8AB4FF;
-  --accent: #E6B85C;
-  --accent-ink: #E6B85C;
-  --badge-bg: color-mix(in srgb, #E6B85C 14%, transparent);
-  --badge-border: color-mix(in srgb, #E6B85C 36%, transparent);
-  /* Venue pill: al-folio green, solid in both themes */
-  --venue-bg: linear-gradient(180deg, #5BA32B, #4E8C20);
-  --venue-fg: #FFFFFF;
-  --muted: #9A9EA8;
-  --body-muted: #AEB2BB;
-  --border: #2C3038;
-  --card-bg: #1B1E24;
-  --nav-bg: #15171CF2;
-  --modal-bg: #21242B;
-  --timeline-line: #2C3038;
-  --timeline-node: #9A9EA8;
-  /* Liquid glass: translucent surfaces, refraction rims, and the goo behind them. */
-  --glass-bg: rgba(21, 23, 28, 0.35);
-  --glass-bg-strong: rgba(33, 36, 43, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-highlight: rgba(255, 255, 255, 0.10);
-  --glass-shade: rgba(0, 0, 0, 0.45);
-  --glass-gloss: rgba(255, 255, 255, 0.04);
-  --glass-sheen: rgba(255, 255, 255, 0.05);
-  --glass-shadow: rgba(0, 0, 0, 0.6);
-  --skeu-face: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
-  --skeu-face-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-  --skeu-well: rgba(0, 0, 0, 0.5);
-  /* Shade-only clouds in dark mode: depth without any light-grey patches. */
-  --blob-1: #1E2128;
-  --blob-2: #0C0D11;
-  --blob-3: #1B1E25;
-  --blob-opacity: 1;
+/* Material Design 3 tokens in Claude's palette: ivory paper (#FAF9F5) and warm greys, Claude's clay
+   orange as the single accent (#C15F3C light, #D97757 dark), warm near-black ink (#141413).
+   The accent is used sparingly (main button, links, year headings, venue labels); selected states such
+   as the active tab are warm grey, as in Claude's UI. Dark mode is genuinely dark: a #151514 page with
+   cards only a few steps lighter. */
+:root, :root[data-theme="light"] {
+  --md-primary: #c15f3c;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #f6e1d6;
+  --blue-container: #dce6f4;
+  --on-blue-container: #1d3d66;
+  --md-on-primary-container: #6e2c13;
+  --md-secondary: #5e5d59;
+  --md-on-secondary: #ffffff;
+  --md-secondary-container: #e8e6dc;
+  --md-on-secondary-container: #141413;
+  --md-tertiary: #5e5d59;
+  --md-tertiary-container: #e8e6dc;
+  --md-on-tertiary-container: #141413;
+  --md-surface: #faf9f5;
+  --md-on-surface: #141413;
+  --md-on-surface-variant: #5e5d59;
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low: #f4f3ee;
+  --md-surface-container: #f0eee6;
+  --md-surface-container-high: #e8e6dc;
+  --md-surface-container-highest: #dfdcd0;
+  --md-outline: #87867f;
+  --md-outline-variant: #dedcd1;
+  --md-inverse-surface: #141413;
+  --md-inverse-on-surface: #faf9f5;
+  --md-inverse-primary: #e8a183;
+  --md-scrim: #000000;
+  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, .3), 0 1px 3px 1px rgba(0, 0, 0, .15);
+  --md-elevation-2: 0 1px 2px rgba(0, 0, 0, .3), 0 2px 6px 2px rgba(0, 0, 0, .15);
+  --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, .15), 0 1px 3px rgba(0, 0, 0, .3);
+  --md-on-tertiary: #ffffff;
+  --page: var(--md-surface);
+  color-scheme: light;
 }
-:root[data-theme="light"] {
-  --bg: #F4F4F4;
-  --surface: #FFFFFF;
-  --fg: #1C1C1C;
-  --link: #1A5FD0;
-  --accent: #B8741F;
-  --accent-ink: #FFFFFF;
-  --badge-bg: linear-gradient(180deg, color-mix(in srgb, #B8741F 90%, white), #B8741F);
-  --badge-border: transparent;
-  --venue-bg: linear-gradient(180deg, #5BA32B, #4E8C20);
-  --venue-fg: #FFFFFF;
-  --muted: #6E6E6E;
-  --body-muted: #5C5C5C;
-  --border: #E0E0E0;
-  --card-bg: #EBEBEB;
-  --nav-bg: #F4F4F4F2;
-  --modal-bg: #FFFFFF;
-  --timeline-line: #E0E0E0;
-  --timeline-node: #6E6E6E;
-  --glass-bg: rgba(255, 255, 255, 0.18);
-  --glass-bg-strong: rgba(255, 255, 255, 0.38);
-  --glass-border: rgba(20, 20, 20, 0.12);
-  --glass-highlight: rgba(255, 255, 255, 0.9);
-  --glass-shade: rgba(20, 20, 20, 0.10);
-  --glass-gloss: rgba(255, 255, 255, 0.6);
-  --glass-sheen: rgba(255, 255, 255, 0.55);
-  --glass-shadow: rgba(20, 20, 20, 0.22);
-  --skeu-face: linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.35));
-  --skeu-face-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.55));
-  --skeu-well: rgba(20, 20, 20, 0.12);
-  --blob-1: #FFFFFF;
-  --blob-2: #E2E2E0;
-  --blob-3: #FFFFFF;
-  --blob-opacity: .9;
+:root[data-theme="dark"] {
+  --md-primary: #d97757;
+  --md-on-primary: #141413;
+  --md-primary-container: #45281c;
+  --blue-container: #1c2b3e;
+  --on-blue-container: #b4cbea;
+  --md-on-primary-container: #f2c4ae;
+  --md-secondary: #b0aea5;
+  --md-on-secondary: #141413;
+  --md-secondary-container: #30302e;
+  --md-on-secondary-container: #ece9e1;
+  --md-tertiary: #b0aea5;
+  --md-tertiary-container: #30302e;
+  --md-on-tertiary-container: #ece9e1;
+  --md-surface: #151514;
+  --md-on-surface: #ece9e1;
+  --md-on-surface-variant: #a9a79e;
+  --md-surface-container-lowest: #0f0f0e;
+  --md-surface-container-low: #1c1c1a;
+  --md-surface-container: #1f1e1d;
+  --md-surface-container-high: #262624;
+  --md-surface-container-highest: #30302e;
+  --md-outline: #73726c;
+  --md-outline-variant: #2f2f2c;
+  --md-inverse-surface: #ece9e1;
+  --md-inverse-on-surface: #1f1e1d;
+  --md-inverse-primary: #c15f3c;
+  --md-scrim: #000000;
+  --md-elevation-1: 0 1px 2px rgba(0, 0, 0, .3), 0 1px 3px 1px rgba(0, 0, 0, .15);
+  --md-elevation-2: 0 1px 2px rgba(0, 0, 0, .3), 0 2px 6px 2px rgba(0, 0, 0, .15);
+  --md-elevation-3: 0 4px 8px 3px rgba(0, 0, 0, .15), 0 1px 3px rgba(0, 0, 0, .3);
+  --md-on-tertiary: #141413;
+  --page: var(--md-surface);
+  color-scheme: dark;
+}
+
+/* Legacy names mapped onto M3 roles (used by the admin area and shared helpers). */
+:root {
+  --bg: var(--page);
+  --surface: var(--md-surface-container-low);
+  --fg: var(--md-on-surface);
+  --body: var(--md-on-surface-variant);
+  --body-muted: var(--md-on-surface-variant);
+  --muted: var(--md-on-surface-variant);
+  --faint: var(--md-outline);
+  --border: var(--md-outline-variant);
+  --rule: var(--md-outline-variant);
+  --accent: var(--md-primary);
+  --accent-soft: color-mix(in srgb, var(--md-primary) 10%, transparent);
+  --card-bg: var(--md-surface-container);
+  --shadow: var(--md-elevation-2);
+  /* M3 shape scale */
+  --shape-xs: 4px; --shape-sm: 8px; --shape-md: 12px; --shape-lg: 16px; --shape-xl: 28px; --shape-full: 999px;
+  /* M3 motion */
+  --ease-emph: cubic-bezier(.2, 0, 0, 1);
+  --ease-emph-decel: cubic-bezier(.05, .7, .1, 1);
+  --ease-emph-accel: cubic-bezier(.3, 0, .8, .15);
+  --ease-out: var(--ease-emph-decel);
 }
 
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--fg);
   --color-accent: var(--accent);
-  --font-display: var(--font-display);
-  --font-mono: var(--font-mono);
+  --font-sans: var(--font-sans), Roboto, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 
 html {
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--page);
+  color: var(--md-on-surface);
+  -webkit-text-size-adjust: 100%;
 }
-
-/* Offset scroll targets so the fixed nav doesn't cover section tops */
-h2, section[id] { scroll-margin-top: 84px; }
 
 body {
-  /* Transparent so the fixed liquid background (z-index -1) shows through; html paints the base colour. */
-  background: transparent;
-  color: var(--fg);
-  font-family: var(--font-display), system-ui, sans-serif;
+  background: var(--page);
+  color: var(--md-on-surface);
+  font-family: var(--font-sans), Roboto, ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: .01em;
   -webkit-font-smoothing: antialiased;
-  transition: color 0.25s;
 }
 
-.mono { font-family: var(--font-mono), monospace; }
+h2, section[id] { scroll-margin-top: 88px; }
 
-.label {
-  font-family: var(--font-mono), monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
+/* Admin helpers */
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.label { font-size: 0.75rem; letter-spacing: 0.05em; font-weight: 500; color: var(--muted); }
 .hairline { border-top: 1px solid var(--border); }
 .accent { color: var(--accent); }
+.card-glass { border: 1px solid var(--border); background: var(--card-bg); border-radius: var(--shape-lg); padding: 1.5rem; }
 
-.card-glass {
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.045);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
-}
-
-.card-glass:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
-::selection { background: var(--accent); color: var(--bg); }
+:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+::selection { background: var(--md-primary-container); color: var(--md-on-primary-container); }

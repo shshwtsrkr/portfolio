@@ -1,6 +1,9 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { MdAdd, MdArrowDownward, MdArrowUpward, MdClose, MdLink, MdSave } from 'react-icons/md'
+import { snackbar } from '@/components/Material'
+import { Button, IconButton, PageHeader, Select, TextField } from './m3'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import type { Profile, EmptyMessages, SectionLabels } from '@/types'
@@ -69,12 +72,10 @@ export default function ProfileAdmin({ initialProfile, devMode }: { initialProfi
   })
 
   const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState('')
 
   const save = async () => {
-    if (devMode) { alert('Dev mode: saves disabled. Connect Supabase + log in to persist.'); return }
+    if (devMode) return snackbar('Dev mode: saving is off. Connect Supabase and sign in.')
     setSaving(true)
-    setStatus('')
     const payload = {
       name, title,
       about,
@@ -104,116 +105,92 @@ export default function ProfileAdmin({ initialProfile, devMode }: { initialProfi
       ({ error } = await supabase.from('profile').insert(payload))
     }
     setSaving(false)
-    if (error) { setStatus(`Error: ${error.message}`) }
-    else { setStatus('Saved ✓'); router.refresh(); setTimeout(() => setStatus(''), 2500) }
+    if (error) return snackbar(`Couldn't save: ${error.message}`)
+    snackbar('Profile saved')
+    router.refresh()
   }
 
+  const setSocial = (i: number, patch: Partial<SocialRow>) => setSocials(socials.map((s, idx) => (idx === i ? { ...s, ...patch } : s)))
+  const moveSocial = (i: number, by: number) => { const n = [...socials]; [n[i + by], n[i]] = [n[i], n[i + by]]; setSocials(n) }
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <div className="flex items-center gap-3">
-          {status && <span className={`text-sm ${status.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{status}</span>}
-          <button onClick={save} disabled={saving}
-            className="px-4 py-2 bg-white text-black rounded-full font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors">
-            {saving ? 'Saving…' : 'Save Profile'}
-          </button>
-        </div>
-      </div>
+    <>
+      <PageHeader title="Profile" subtitle="Your name, introduction and links on the home page.">
+        <Button icon={<MdSave size={20} />} onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
+      </PageHeader>
 
-      <div className="space-y-6">
-        {/* Basic info */}
-        <div className="card-glass">
-          <h2 className="text-lg font-semibold mb-4">Basic Info</h2>
-          <div className="grid gap-4">
-            <Field label="Name" value={name} onChange={setName} required />
-            <Field label="Title (e.g. ML Engineer & Researcher)" value={title} onChange={setTitle} required />
-            <MarkdownField label="About me" value={about} onChange={setAbout} rows={6}
-              hint="Markdown: blank line = new paragraph, **bold**, and links as [text](https://…). Select text and press “Link” to wrap it." />
-            <span className="text-xs text-gray-400 mb-2 block">About highlights (must match text exactly; shown in the accent colour)</span>
-            <ListEditor items={aboutHighlights} setItems={setAboutHighlights} placeholder="e.g. computer vision" addLabel="+ Add about highlight" accentDot />
-            {about && (
-              <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <span className="text-[10px] uppercase tracking-widest text-gray-500 block mb-1">About preview</span>
-                <MarkdownPreview text={about} words={aboutHighlights.filter(Boolean)} />
+      <section className="a-card">
+        <h2>Basics</h2>
+        <div className="a-stack">
+          <ImageUpload label="Photo" value={imageUrl} onChange={setImageUrl} devMode={devMode} round />
+          <TextField label="Name" value={name} onChange={setName} required />
+          <TextField label="Title" value={title} onChange={setTitle} required support="Shown under your name, e.g. Researcher in Medical Imaging | AI & Infra Engineer" />
+          <MarkdownField label="About" value={about} onChange={setAbout} rows={8}
+            hint="Markdown: a blank line starts a new paragraph, **bold**, links as [text](https://…). Select text and press the link button to wrap it." />
+          <div>
+            <span className="a-label">Highlighted phrases</span>
+            <ListEditor items={aboutHighlights} setItems={setAboutHighlights} placeholder="e.g. computer vision" addLabel="Add phrase" />
+            <span className="a-field-support" style={{ margin: '8px 0 0' }}>Must match the About text exactly; shown in the accent colour.</span>
+          </div>
+          {about && (
+            <div>
+              <span className="a-label">Preview</span>
+              <MarkdownPreview text={about} words={aboutHighlights.filter(Boolean)} />
+            </div>
+          )}
+          <TextField label="Résumé URL" type="url" value={resumeUrl} onChange={setResumeUrl} support="Link to a PDF; Google Drive share links work" />
+        </div>
+      </section>
+
+      <section className="a-card">
+        <h2>Social links</h2>
+        <p className="a-card-sub">Shown as icons under your name, in this order.</p>
+        <div className="a-repeat">
+          {socials.map((s, i) => (
+            <div key={i} className="a-repeat-row">
+              <Select label="Platform" value={s.platform} onChange={v => setSocial(i, { platform: v })} options={PLATFORMS} />
+              <TextField label={s.platform === 'email' ? 'Email address' : 'URL'} value={s.url} onChange={v => setSocial(i, { url: v })} />
+              <div className="a-list-actions">
+                <IconButton label="Move up" disabled={i === 0} onClick={() => moveSocial(i, -1)}><MdArrowUpward size={20} /></IconButton>
+                <IconButton label="Move down" disabled={i === socials.length - 1} onClick={() => moveSocial(i, 1)}><MdArrowDownward size={20} /></IconButton>
+                <IconButton label="Remove" danger onClick={() => setSocials(socials.filter((_, idx) => idx !== i))}><MdClose size={20} /></IconButton>
               </div>
-            )}
-            <ImageUpload label="Profile Image (optional)" value={imageUrl} onChange={setImageUrl} devMode={devMode} />
-            <Field label="Resume URL (PDF link — Google Drive share links work)" value={resumeUrl} onChange={setResumeUrl} />
-          </div>
+            </div>
+          ))}
+          <div><Button variant="text" icon={<MdAdd size={20} />} onClick={() => setSocials([...socials, { platform: 'github', url: '' }])}>Add link</Button></div>
         </div>
+      </section>
 
-        {/* Socials */}
-        <div className="card-glass">
-          <h2 className="text-lg font-semibold mb-1">Social Links</h2>
-          <p className="text-xs text-gray-400 mb-4">Shown as icons under your name, in this order. Drag-free reorder with the arrows.</p>
-          <div className="space-y-2">
-            {socials.map((s, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <select
-                  value={s.platform}
-                  onChange={(e) => { const n = [...socials]; n[i] = { ...n[i], platform: e.target.value }; setSocials(n) }}
-                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-white text-sm focus:outline-none focus:border-white/30 shrink-0"
-                  style={{ width: 150 }}
-                >
-                  {PLATFORMS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-                </select>
-                <input
-                  value={s.url}
-                  onChange={(e) => { const n = [...socials]; n[i] = { ...n[i], url: e.target.value }; setSocials(n) }}
-                  placeholder={s.platform === 'email' ? 'you@example.com' : 'https://…'}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30"
-                />
-                <button type="button" disabled={i === 0}
-                  onClick={() => { const n = [...socials]; [n[i-1], n[i]] = [n[i], n[i-1]]; setSocials(n) }}
-                  className="px-2 py-1.5 rounded-lg text-xs bg-white/10 hover:bg-white/20 disabled:opacity-30 transition-colors">↑</button>
-                <button type="button" disabled={i === socials.length - 1}
-                  onClick={() => { const n = [...socials]; [n[i+1], n[i]] = [n[i], n[i+1]]; setSocials(n) }}
-                  className="px-2 py-1.5 rounded-lg text-xs bg-white/10 hover:bg-white/20 disabled:opacity-30 transition-colors">↓</button>
-                <button type="button" onClick={() => setSocials(socials.filter((_, idx) => idx !== i))}
-                  className="px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-900/20 transition-colors">✕</button>
-              </div>
-            ))}
-            <button type="button" onClick={() => setSocials([...socials, { platform: 'github', url: '' }])}
-              className="px-3 py-1.5 rounded-lg text-xs bg-white/10 hover:bg-white/20 transition-colors">
-              + Add social link
-            </button>
-          </div>
+      <section className="a-card">
+        <h2>Page taglines</h2>
+        <p className="a-card-sub">One sentence under each page&apos;s title. Leave blank to show nothing.</p>
+        <div className="a-stack">
+          <TextField label="Experience" value={labels.experience} onChange={v => setLabels({ ...labels, experience: v })} />
+          <TextField label="Publications" value={labels.publications} onChange={v => setLabels({ ...labels, publications: v })} />
+          <TextField label="Projects" value={labels.projects} onChange={v => setLabels({ ...labels, projects: v })} />
+          <TextField label="Writing" value={labels.blogs} onChange={v => setLabels({ ...labels, blogs: v })} />
         </div>
+      </section>
 
-        {/* Section labels */}
-        <div className="card-glass">
-          <h2 className="text-lg font-semibold mb-1">Page Taglines</h2>
-          <p className="text-xs text-gray-400 mb-4">One sentence shown under the title of each page (publications, projects, work, writing). Leave blank to show nothing.</p>
-          <div className="grid gap-4">
-            <Field label="Work tagline" value={labels.experience || ''} onChange={(v) => setLabels({ ...labels, experience: v })} />
-            <Field label="Publications tagline" value={labels.publications || ''} onChange={(v) => setLabels({ ...labels, publications: v })} />
-            <Field label="Projects tagline" value={labels.projects || ''} onChange={(v) => setLabels({ ...labels, projects: v })} />
-            <Field label="Writing tagline" value={labels.blogs || ''} onChange={(v) => setLabels({ ...labels, blogs: v })} />
-          </div>
+      <section className="a-card">
+        <h2>Empty page messages</h2>
+        <p className="a-card-sub">Shown when a page has nothing published yet.</p>
+        <div className="a-stack">
+          <TextField label="Writing" value={emptyMsgs.blogs} onChange={v => setEmptyMsgs({ ...emptyMsgs, blogs: v })} />
+          <TextField label="Projects" value={emptyMsgs.projects} onChange={v => setEmptyMsgs({ ...emptyMsgs, projects: v })} />
+          <TextField label="Publications" value={emptyMsgs.publications} onChange={v => setEmptyMsgs({ ...emptyMsgs, publications: v })} />
         </div>
-
-        {/* Empty-state messages */}
-        <div className="card-glass">
-          <h2 className="text-lg font-semibold mb-1">Empty Section Messages</h2>
-          <p className="text-xs text-gray-400 mb-4">Shown on a page when it has no published entries.</p>
-          <div className="grid gap-4">
-            <Field label="Writing — empty message" value={emptyMsgs.blogs || ''} onChange={(v) => setEmptyMsgs({ ...emptyMsgs, blogs: v })} />
-            <Field label="Projects — empty message" value={emptyMsgs.projects || ''} onChange={(v) => setEmptyMsgs({ ...emptyMsgs, projects: v })} />
-            <Field label="Publications — empty message" value={emptyMsgs.publications || ''} onChange={(v) => setEmptyMsgs({ ...emptyMsgs, publications: v })} />
-          </div>
-        </div>
-      </div>
-    </div>
+      </section>
+    </>
   )
 }
 
 function MarkdownPreview({ text, words }: { text: string; words: string[] }) {
   const hl = (children: React.ReactNode): React.ReactNode => Array.isArray(children)
     ? children.map((c, i) => typeof c === 'string' ? <span key={i}>{hl(c)}</span> : c)
-    : typeof children === 'string' ? <PreviewLine text={children} words={words} inline /> : children
+    : typeof children === 'string' ? <Highlighted text={children} words={words} /> : children
   return (
-    <div className="text-sm text-gray-200 leading-relaxed space-y-2 [&_a]:underline [&_a]:text-blue-400">
+    <div className="a-preview">
       <ReactMarkdown components={{ p: ({ children }) => <p>{hl(children)}</p>, li: ({ children }) => <li>{hl(children)}</li> }}>{text}</ReactMarkdown>
     </div>
   )
@@ -228,24 +205,16 @@ function MarkdownField({ label, value, onChange, rows = 4, hint }: { label: stri
     if (!url) return
     const { selectionStart: a, selectionEnd: b } = el
     const selected = value.slice(a, b) || 'link text'
-    const next = `${value.slice(0, a)}[${selected}](${url})${value.slice(b)}`
-    onChange(next)
+    onChange(`${value.slice(0, a)}[${selected}](${url})${value.slice(b)}`)
     requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + 1, a + 1 + selected.length) })
   }
   return (
-    <label className="block">
-      <span className="text-xs text-gray-400 mb-1 flex items-center justify-between">
-        <span>{label}</span>
-        <button type="button" onClick={insertLink} className="px-2 py-0.5 rounded-md text-[11px] bg-white/10 hover:bg-white/20 transition-colors">Link</button>
-      </span>
-      <textarea ref={ref} value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono focus:outline-none focus:border-white/30" />
-      {hint && <span className="text-[11px] text-gray-500 mt-1 block">{hint}</span>}
-    </label>
+    <TextField label={label} value={value} onChange={onChange} multiline rows={rows} mono support={hint} inputRef={ref}
+      tools={<IconButton label="Insert link" onClick={insertLink}><MdLink size={20} /></IconButton>} />
   )
 }
 
-function PreviewLine({ text, words, inline }: { text: string; words: string[]; inline?: boolean }) {
+function Highlighted({ text, words }: { text: string; words: string[] }) {
   let parts: { t: string; hl: boolean }[] = [{ t: text, hl: false }]
   for (const w of words) {
     if (!w) continue
@@ -254,48 +223,19 @@ function PreviewLine({ text, words, inline }: { text: string; words: string[]; i
       p.hl ? [p] : p.t.split(re).filter(Boolean).map((s) => ({ t: s, hl: s.toLowerCase() === w.toLowerCase() }))
     )
   }
-  const body = parts.map((p, i) => p.hl
-    ? <span key={i} style={{ color: ACCENT, fontWeight: 600 }}>{p.t}</span>
-    : <span key={i}>{p.t}</span>)
-  return inline ? <>{body}</> : <p className="text-sm text-gray-200 leading-relaxed">{body}</p>
+  return <>{parts.map((p, i) => p.hl ? <span key={i} className="hl">{p.t}</span> : <span key={i}>{p.t}</span>)}</>
 }
 
-function ListEditor({ items, setItems, placeholder, addLabel, accentDot }: {
-  items: string[]; setItems: (v: string[]) => void; placeholder: string; addLabel: string; accentDot?: boolean
-}) {
+function ListEditor({ items, setItems, placeholder, addLabel }: { items: string[]; setItems: (v: string[]) => void; placeholder: string; addLabel: string }) {
   return (
-    <div className="space-y-2">
+    <div className="a-repeat">
       {items.map((item, i) => (
-        <div key={i} className="flex items-center gap-2">
-          {accentDot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT, flexShrink: 0 }} />}
-          <input
-            value={item}
-            onChange={(e) => { const next = [...items]; next[i] = e.target.value; setItems(next) }}
-            placeholder={placeholder}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30"
-          />
-          <button type="button" onClick={() => setItems(items.filter((_, idx) => idx !== i))}
-            className="px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-900/20 transition-colors shrink-0">
-            ✕
-          </button>
+        <div key={i} className="a-repeat-row single">
+          <TextField label="Phrase" value={item} placeholder={placeholder} onChange={v => { const next = [...items]; next[i] = v; setItems(next) }} />
+          <IconButton label="Remove" danger onClick={() => setItems(items.filter((_, idx) => idx !== i))}><MdClose size={20} /></IconButton>
         </div>
       ))}
-      <button type="button" onClick={() => setItems([...items, ''])}
-        className="px-3 py-1.5 rounded-lg text-xs bg-white/10 hover:bg-white/20 transition-colors">
-        {addLabel}
-      </button>
+      <div><Button variant="text" icon={<MdAdd size={20} />} onClick={() => setItems([...items, ''])}>{addLabel}</Button></div>
     </div>
-  )
-}
-
-function Field({ label, value, onChange, type = 'text', required = false }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean
-}) {
-  return (
-    <label className="block">
-      <span className="text-xs text-gray-400 mb-1 block">{label}{required && ' *'}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-white/30" />
-    </label>
   )
 }

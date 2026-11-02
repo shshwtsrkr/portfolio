@@ -1,4 +1,4 @@
-import type { Profile, Blog, Project, Publication, Experience } from '@/types'
+import type { Profile, Blog, Project, Publication, Experience, Certification } from '@/types'
 
 export const MOCK_PROFILE: Profile = {
   id: 1,
@@ -130,3 +130,7 @@ export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   return url.length > 0 && !url.includes('placeholder') && url.includes('.supabase.')
 }
+
+export const MOCK_CERTIFICATIONS: Certification[] = [
+  { id: 1, name: 'Professional Machine Learning Engineer', issuer: 'Google Cloud', issued_date: '2026-10-01', expires_date: '2028-10-01', credential_url: null, display_order: 0, is_published: true },
+]

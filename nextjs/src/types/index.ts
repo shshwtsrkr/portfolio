@@ -100,6 +100,8 @@ export interface Publication {
   authors?: string
   venue?: string
   publication_year?: number
+  /** 1–12, optional. Papers often only have a year; when set, "Recently" shows the month. */
+  publication_month?: number | null
   abstract_text?: string
   doi?: string
   pdf_url?: string
@@ -125,6 +127,19 @@ export interface Experience {
   end_date?: string | null
   is_current?: boolean
   description?: string | null
+  display_order?: number
+  is_published?: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface Certification {
+  id: number
+  name: string
+  issuer: string
+  issued_date: string
+  expires_date?: string | null
+  credential_url?: string | null
   display_order?: number
   is_published?: boolean
   created_at?: string
